@@ -12,7 +12,7 @@
        and also update robots.txt (instructions inside it). -->
   <meta name="robots" content="noindex, nofollow">
 
-  <meta name="theme-color" content="#0a0810">
+  <meta name="theme-color" content="#0b0a0d">
   <meta name="color-scheme" content="dark">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
@@ -77,10 +77,11 @@
 
   <!-- Fonts ("D · Highway"):
        Big Shoulders Display 800/900 (headlines), Barlow 400/500 (body, buttons),
-       Barlow Semi Condensed 600 (labels and specs) -->
+       Barlow Semi Condensed 600 (labels and specs),
+       Instrument Serif regular + italic (the contrast face: highlighted phrases, section intros) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500&family=Barlow+Semi+Condensed:wght@600&family=Big+Shoulders+Display:wght@800;900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500&family=Barlow+Semi+Condensed:wght@600&family=Big+Shoulders+Display:wght@800;900&family=Instrument+Serif:ital@0;1&display=swap">
 
   <!-- The first picture is the first thing people see, so fetch it early:
        the wide poster on landscape screens, the tall first frame on phones. -->
@@ -122,6 +123,10 @@
                              where the text sits on tall screens (portrait frames)
              at-desk-top / at-desk-bottom / at-desk-middle
                              where the text sits on wide screens (desktop frames)
+             align-right / align-center
+                             text sits on the right / in the middle, and is aligned
+                             that way (no class = left). The card also slides in
+                             from that side. Same side on phones and wide screens.
              data-chapter    this scene is a chapter: it gets a tick on the progress line
              .still          a still photo, only shown (and downloaded) when the film
                              is off: reduced motion or no JavaScript
@@ -140,24 +145,24 @@
               <h1 class="display">
                 <span class="line"><span>Every hoarding</span></span>
                 <span class="line"><span>starts as a</span></span>
-                <span class="line"><span><em class="grad">blank sheet.</em></span></span>
+                <span class="line"><span><em class="accent">blank sheet.</em></span></span>
               </h1>
             </div>
           </div>
 
-          <!-- 01 · Print (frames 135–235) -->
+          <!-- 01 · Print (frames 135–220), top-right -->
           <!-- scene--bright: white flex fills the frame here, so a deeper gradient on wide screens -->
-          <div class="scene scene--bright timed at-phone-top at-desk-top" data-in="135" data-out="235" data-chapter="Print">
+          <div class="scene scene--bright timed at-phone-top at-desk-top align-right" data-in="135" data-out="220" data-chapter="Print">
             <picture class="still">
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0185.webp" width="405" height="720">
               <img src="assets/frames/desktop/f0185.webp" width="1280" height="720" loading="lazy" alt="A large-format printer prints a violet and orange design onto white flex.">
             </picture>
             <div class="scrim"></div>
             <div class="card">
-              <p class="label fade">01 · Print</p>
+              <p class="label label--chapter fade"><span><span class="num">01</span> · Print</span></p>
               <h2 class="display">
                 <span class="line"><span>Printed in-house,</span></span>
-                <span class="line"><span><em class="grad">colour-true.</em></span></span>
+                <span class="line"><span><em class="accent">colour-true.</em></span></span>
               </h2>
               <p class="card__body fade">Large-format machines in our own facility, so your brand colours stay exact from the first sheet to the last.</p>
             </div>
@@ -171,27 +176,27 @@
             </picture>
             <div class="scrim"></div>
             <div class="card">
-              <p class="label fade">02 · Finish</p>
+              <p class="label label--chapter fade"><span><span class="num">02</span> · Finish</span></p>
               <h2 class="display">
                 <span class="line"><span>Every edge,</span></span>
-                <span class="line"><span><em class="grad">reinforced.</em></span></span>
+                <span class="line"><span><em class="accent">reinforced.</em></span></span>
               </h2>
               <p class="card__body fade">Hemmed borders and metal eyelets along every side keep the flex tight through wind and monsoon rain.</p>
             </div>
           </div>
 
-          <!-- 03 · Our crew (frames 430–530) -->
-          <div class="scene timed at-phone-bottom at-desk-bottom" data-in="430" data-out="530" data-chapter="Crew">
+          <!-- 03 · Our crew (frames 430–505), top-right on wide screens -->
+          <div class="scene timed at-phone-bottom at-desk-top align-right" data-in="430" data-out="505" data-chapter="Crew">
             <picture class="still">
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0480.webp" width="405" height="720">
               <img src="assets/frames/desktop/f0480.webp" width="1280" height="720" loading="lazy" alt="Three crew members carry the rolled hoarding out of the workshop.">
             </picture>
             <div class="scrim"></div>
             <div class="card">
-              <p class="label fade">03 · Our crew</p>
+              <p class="label label--chapter fade"><span><span class="num">03</span> · Our crew</span></p>
               <h2 class="display">
                 <span class="line"><span>One team,</span></span>
-                <span class="line"><span><em class="grad">start to finish.</em></span></span>
+                <span class="line"><span><em class="accent">start to finish.</em></span></span>
               </h2>
               <p class="card__body fade">The people who print your hoarding are the people who carry it out and put it up.</p>
             </div>
@@ -204,11 +209,12 @@
               <img src="assets/frames/desktop/f0700.webp" width="1280" height="720" loading="lazy" alt="Evening sky over the city, where the hoarding will go up.">
             </picture>
             <div class="stack">
+              <!-- the soft line in the serif, the answer in big amber capitals -->
               <p class="display display--center timed" data-in="588" data-out="650">
-                <span class="line"><span>From our floor…</span></span>
+                <span class="line"><span><em class="accent">From our floor…</em></span></span>
               </p>
-              <p class="display display--center timed" data-in="613" data-out="667">
-                <span class="line"><span><em class="grad">…to your skyline.</em></span></span>
+              <p class="display display--center display--amber timed" data-in="613" data-out="667">
+                <span class="line"><span>…to your skyline.</span></span>
               </p>
             </div>
           </div>
@@ -221,10 +227,10 @@
             </picture>
             <div class="scrim"></div>
             <div class="card">
-              <p class="label fade">04 · Install</p>
+              <p class="label label--chapter fade"><span><span class="num">04</span> · Install</span></p>
               <h2 class="display">
                 <span class="line"><span>Installed safely,</span></span>
-                <span class="line"><span><em class="grad">at any height.</em></span></span>
+                <span class="line"><span><em class="accent">at any height.</em></span></span>
               </h2>
               <p class="card__body fade">Harnessed, helmeted installers mount and tension every banner on site.</p>
             </div>
@@ -245,18 +251,18 @@
             </p>
           </div>
 
-          <!-- 05 · Light (frames 935–1060) -->
-          <div class="scene timed at-phone-bottom at-desk-bottom" data-in="935" data-out="1060" data-chapter="Light">
+          <!-- 05 · Light (frames 935–1060), bottom-centre -->
+          <div class="scene timed at-phone-bottom at-desk-bottom align-center" data-in="935" data-out="1060" data-chapter="Light">
             <picture class="still">
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f1040.webp" width="405" height="720">
               <img src="assets/frames/desktop/f1040.webp" width="1280" height="720" loading="lazy" alt="Floodlights shine on the Trinetra hoarding above a busy road at night.">
             </picture>
             <div class="scrim"></div>
             <div class="card">
-              <p class="label fade">05 · Light</p>
+              <p class="label label--chapter fade"><span><span class="num">05</span> · Light</span></p>
               <h2 class="display">
                 <span class="line"><span>Seen</span></span>
-                <span class="line"><span><em class="grad">day and night.</em></span></span>
+                <span class="line"><span><em class="accent">day and night.</em></span></span>
               </h2>
               <p class="card__body fade">Floodlit and backlit options keep your message working long after sunset.</p>
             </div>
@@ -273,8 +279,8 @@
               <p class="label fade">Imagine · Believe · Achieve</p>
               <h2 class="display">
                 <span class="line"><span>Your brand,</span></span>
-                <span class="line"><span><em class="grad">seen by the</em></span></span>
-                <span class="line"><span><em class="grad">whole city.</em></span></span>
+                <span class="line"><span><em class="accent">seen by the</em></span></span>
+                <span class="line"><span><em class="accent">whole city.</em></span></span>
               </h2>
               <div class="actions fade">
                 <a class="btn btn--primary" href="#contact"><span>Plan your hoarding</span></a>
@@ -302,7 +308,7 @@
           <p class="label label--mute">What we do</p>
           <h2 class="display section__title" id="services-title">
             <span class="line" style="--i:0"><span>Design. Print.</span></span>
-            <span class="line" style="--i:1"><span><em class="grad">Install.</em></span></span>
+            <span class="line" style="--i:1"><span><em class="accent">Install.</em></span></span>
           </h2>
           <p class="section__lead">One team takes your hoarding from first sketch to final fitting. You brief us once, and we handle every step in between.</p>
         </header>
@@ -335,12 +341,14 @@
          Big screens: four columns, the line runs across. -->
     <section class="section steps" id="how" aria-labelledby="how-title">
       <div class="wrap">
-        <header class="section__head reveal">
+        <!-- centred head: a change of rhythm after the left-aligned section above -->
+        <header class="section__head section__head--center reveal">
           <p class="label label--mute">How it works</p>
           <h2 class="display section__title" id="how-title">
             <span class="line" style="--i:0"><span>Four steps to</span></span>
-            <span class="line" style="--i:1"><span><em class="grad">your skyline.</em></span></span>
+            <span class="line" style="--i:1"><span><em class="accent">your skyline.</em></span></span>
           </h2>
+          <p class="section__lead">From your first message to the finished hoarding, you always know what happens next.</p>
         </header>
 
         <ol class="steps__list">
@@ -369,13 +377,15 @@
     </section>
 
     <!-- ============ WHY TRINETRA ============ -->
+    <!-- Big screens: two columns. The headline sticks on the left
+         while the four points scroll past on the right. Phones: stacked. -->
     <section class="section why" id="why" aria-labelledby="why-title">
-      <div class="wrap">
-        <header class="section__head reveal">
+      <div class="wrap why__grid">
+        <header class="section__head why__head reveal">
           <p class="label label--mute">Why Trinetra</p>
           <h2 class="display section__title" id="why-title">
             <span class="line" style="--i:0"><span>Big, bright and</span></span>
-            <span class="line" style="--i:1"><span><em class="grad">built to last.</em></span></span>
+            <span class="line" style="--i:1"><span><em class="accent">built to last.</em></span></span>
           </h2>
         </header>
 
@@ -410,7 +420,7 @@
           <p class="label label--mute">Questions</p>
           <h2 class="display section__title" id="faq-title">
             <span class="line" style="--i:0"><span>Before you</span></span>
-            <span class="line" style="--i:1"><span><em class="grad">book.</em></span></span>
+            <span class="line" style="--i:1"><span><em class="accent">book.</em></span></span>
           </h2>
         </header>
 
@@ -446,12 +456,13 @@
          <img src="assets/work/work-1.webp" width="1600" height="1200" loading="lazy" decoding="async" alt="Describe the hoarding"> -->
     <section class="section work" id="work" aria-labelledby="work-title">
       <div class="wrap">
+        <!-- headline on the RIGHT this time (the counter sits on the left on phones) -->
         <header class="section__head work__head reveal">
           <div>
             <p class="label label--mute">Work · sample projects</p>
             <h2 class="display section__title" id="work-title">
               <span class="line" style="--i:0"><span>Up around</span></span>
-              <span class="line" style="--i:1"><span><em class="grad">Raipur.</em></span></span>
+              <span class="line" style="--i:1"><span><em class="accent">Raipur.</em></span></span>
             </h2>
             <p class="section__lead">Sample hoardings for local brands, each sized for a real kind of spot around the city. Picture your own name in their place.</p>
           </div>
@@ -498,13 +509,14 @@
          When the client sends real details, replace "98XXX XXXXX" and add the
          number to the wa.me links, like https://wa.me/919800000000 -->
     <section class="section contact" id="contact" aria-labelledby="contact-title">
-      <div class="wrap contact__grid">
-        <header class="section__head reveal">
+      <!-- everything centred, with a very large headline -->
+      <div class="wrap contact__inner">
+        <header class="section__head section__head--center reveal">
           <p class="label label--mute">Contact</p>
           <h2 class="display section__title contact__title" id="contact-title">
             <span class="line" style="--i:0"><span>Let's put</span></span>
             <span class="line" style="--i:1"><span>your name</span></span>
-            <span class="line" style="--i:2"><span><em class="grad">up there.</em></span></span>
+            <span class="line" style="--i:2"><span><em class="accent">up there.</em></span></span>
           </h2>
           <p class="section__lead">Tell us the spot, the size and when you need it. We'll come back with a design plan and a clear quote.</p>
         </header>
@@ -553,7 +565,7 @@
   <!-- Sticky Call / WhatsApp bar (phones only, after the film) -->
   <nav class="actionbar" aria-label="Quick contact">
     <a class="btn btn--ghost actionbar__btn" href="tel:+9198XXXXXXXX"><span>Call</span></a>
-    <a class="btn btn--grad actionbar__btn" href="https://wa.me/" target="_blank" rel="noopener"><span>WhatsApp</span></a>
+    <a class="btn btn--primary actionbar__btn" href="https://wa.me/" target="_blank" rel="noopener"><span>WhatsApp</span></a>
   </nav>
 
   <!-- Lenis (smooth scrolling), pinned version, then our own scripts -->

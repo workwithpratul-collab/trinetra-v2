@@ -12,21 +12,28 @@
 
 /* ---------- 1. Design tokens (colours, fonts, timing) ---------- */
 :root {
-  --night:   #0a0810;   /* page background, violet-tinted black */
-  --panel:   #15121c;   /* cards and panels */
-  --ink:     #f3eef6;   /* main text */
-  --mute:    #a89eb2;   /* secondary text */
-  --line:    rgba(243, 238, 246, .14);
+  /* Calm, warm neutrals + ONE accent (amber, like floodlights and
+     sodium street lights). Contrast on --night: ink 17:1, mute 6.8:1, amber 9.9:1. */
+  --night:   #0b0a0d;   /* page background */
+  --panel:   #16141a;   /* cards and panels */
+  --ink:     #f4efe8;   /* warm white, main text */
+  --mute:    #9e968e;   /* secondary text */
+  --amber:   #ffa23a;   /* the single accent: use sparingly */
+  --line:    rgba(244, 239, 232, .14);
+
+  /* Brand colours: ONLY for the logo, "Imagine. Believe. Achieve.",
+     the progress line fill and the primary button's hover sweep. */
   --violet:  #9b4dff;
   --magenta: #e8399a;
   --saffron: #ff8a3d;
   --grad: linear-gradient(90deg, var(--violet), var(--magenta) 52%, var(--saffron));
-  --shade: 5, 4, 9;     /* the dark used in gradients behind text: rgba(var(--shade), .8) */
+  --shade: 6, 5, 8;     /* the dark used in gradients behind text: rgba(var(--shade), .8) */
 
-  /* Typography "D · Highway" */
+  /* Typography "D · Highway" + a serif for contrast (about 75% / 25%) */
   --font-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;  /* headlines */
   --font-body:    "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;   /* body, buttons, links */
   --font-label:   "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif; /* labels, specs */
+  --font-serif:   "Instrument Serif", Georgia, "Times New Roman", serif;        /* highlighted phrases, intros */
 
   --ease-out: cubic-bezier(.16, 1, .3, 1);   /* fast start, soft landing */
 
@@ -105,30 +112,57 @@ a { color: inherit; }
   text-wrap: balance;
 }
 
-/* The ONE highlighted phrase per screen: heavier weight + brand gradient */
-.grad {
-  font-style: normal;
-  font-weight: 900;
-  background: var(--grad);
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
-  -webkit-box-decoration-break: clone;
-          box-decoration-break: clone;
+/* The ONE highlighted phrase per screen: the contrast face.
+   Tall condensed capitals next to a soft lowercase serif italic.
+   Same colour as the headline: the contrast comes from the typeface.
+   1.1× size because a serif's lowercase looks smaller than capitals;
+   it sits on the same baseline as the capitals. */
+.accent {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.1em;
+  line-height: 0;                 /* don't let the bigger serif push the lines apart */
+  letter-spacing: -.012em;        /* serifs look loose next to tight condensed caps */
+  word-spacing: .04em;
+  text-transform: lowercase;
+  color: inherit;
 }
+/* Big Shoulders is spaced for capitals; give the space before the italic a hair more air */
+.display .accent { padding-left: .02em; }
+
+/* Brand colours, only for "Imagine. Believe. Achieve." */
 .c-violet  { color: var(--violet); }
 .c-magenta { color: var(--magenta); }
 .c-saffron { color: var(--saffron); }
 
 /* Line mask: .line is a window with overflow hidden; the span inside
-   can rise into it (film.js in the film, scroll reveals below it). */
+   can rise into it (film.js in the film, scroll reveals below it).
+   Extra room below each line for the serif's tails (y, g, p), so a hidden
+   line sits 130% down instead of 105% (film.js uses the same number). */
 .line {
   display: block;
   overflow: hidden;
-  padding: .08em .04em .08em 0;   /* a little room so letters are never clipped */
-  margin: -.08em -.04em -.08em 0;
+  padding: .1em .06em .22em 0;    /* room so letters are never clipped */
+  margin: -.1em -.06em -.22em 0;
 }
 .line > span { display: block; }
+
+/* Chapter label: a short amber hairline, then the amber number, then the name.
+   The hairline sits on the side the text is aligned to. */
+.label--chapter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.label--chapter::before {
+  content: "";
+  flex: none;
+  width: 32px;
+  height: 1px;
+  background: var(--amber);
+}
+.num { color: var(--amber); }
 
 /* ---------- 4. Buttons and links ---------- */
 .actions { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -149,8 +183,10 @@ a { color: inherit; }
 }
 .btn > span { position: relative; z-index: 1; }
 
-/* Primary: white pill. On hover a gradient sweeps in from the left. */
-.btn--primary { background: #fff; color: var(--night); }
+/* Primary: amber pill with dark text. On hover the brand gradient sweeps in
+   from the left. The text stays dark: dark on the gradient passes AA (4.6:1
+   or more), white would not. */
+.btn--primary { background: var(--amber); color: var(--night); }
 .btn--primary::before {
   content: "";
   position: absolute;
@@ -160,11 +196,10 @@ a { color: inherit; }
   transform-origin: left;
   transition: transform .55s var(--ease-out);
 }
-.btn--ghost { color: var(--ink); box-shadow: inset 0 0 0 1px rgba(243, 238, 246, .35); }
+.btn--ghost { color: var(--ink); box-shadow: inset 0 0 0 1px rgba(244, 239, 232, .35); }
 
 /* Hover effects only on devices that really hover (mouse, trackpad) */
 @media (hover: hover) {
-  .btn--primary:hover { color: #fff; }
   .btn--primary:hover::before { transform: scaleX(1); }
   .btn--ghost:hover { box-shadow: inset 0 0 0 1px var(--ink); }
 }
@@ -240,7 +275,7 @@ a { color: inherit; }
 .film-on .header:focus-within,
 .is-past-film .header { opacity: 1; }
 .is-past-film .header {
-  background: rgba(10, 8, 16, .72);
+  background: rgba(11, 10, 13, .72);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
           backdrop-filter: blur(14px) saturate(140%);
   box-shadow: 0 1px 0 var(--line);
@@ -304,6 +339,23 @@ a { color: inherit; }
 .card--finale .actions { margin-top: 24px; }
 .card--finale .btn { flex: 1 1 auto; }
 
+/* Right-aligned and centred cards (same side on phones and wide screens).
+   Their body text stays a narrow column (about 30 characters), so the
+   lines form a neat block instead of one long line. */
+.align-right .card  { margin-left: auto; text-align: right; }
+.align-center .card { margin-inline: auto; text-align: center; }
+.align-right .card__body  { max-width: 28ch; margin-left: auto; }
+.align-center .card__body { max-width: 28ch; margin-inline: auto; }
+.align-right .label--chapter  { flex-direction: row-reverse; }   /* hairline on the right */
+.align-center .label--chapter { justify-content: center; }
+.align-center .label--chapter::after {                           /* centred: a hairline each side */
+  content: "";
+  flex: none;
+  width: 32px;
+  height: 1px;
+  background: var(--amber);
+}
+
 /* The two black moments: text centred */
 .scene--center {
   justify-content: center;
@@ -324,7 +376,10 @@ a { color: inherit; }
 .film-on .scrim--glow { display: block; inset: 10% -10%; }
 @media (min-aspect-ratio: 4/5) { .film-on .scrim--glow { inset: 15% 5%; } }
 
-.stack { position: relative; display: grid; gap: .12em; }
+.stack { position: relative; display: grid; gap: .3em; }
+/* "From our floor…" is all serif; "…to your skyline." answers in amber capitals */
+.stack .accent { text-transform: none; }
+.display--amber { color: var(--amber); font-weight: 900; }
 
 .trio {
   position: relative;
@@ -385,7 +440,7 @@ a { color: inherit; }
 .film-on .timed { opacity: 0; visibility: hidden; }
 .film-on .timed.is-on { visibility: visible; }
 .film-on .timed.is-on .card { pointer-events: auto; }
-.film-on .timed .line > span { transform: translateY(105%); }
+.film-on .timed .line > span { transform: translateY(130%); }
 .film-on .timed .fade { opacity: 0; }
 
 /* Chapter indicator: thin line on the right edge with one tick per chapter */
@@ -394,7 +449,7 @@ a { color: inherit; }
   position: absolute;
   top: 0; right: 0; bottom: 0;
   width: 2px;
-  background: rgba(243, 238, 246, .12);
+  background: rgba(244, 239, 232, .12);
 }
 .progress__fill {
   position: absolute;
@@ -409,10 +464,11 @@ a { color: inherit; }
   width: 8px;
   height: 2px;
   margin-top: -1px;
-  background: rgba(243, 238, 246, .4);
+  background: rgba(244, 239, 232, .4);
   transition: background-color .4s ease;
 }
 .progress__tick.is-past { background: var(--ink); }
+.progress__tick.is-current { background: var(--amber); }   /* the chapter you are in */
 .progress__name { display: none; }   /* shown on big screens only (section 8) */
 
 /* "Scroll" cue */
@@ -440,7 +496,7 @@ a { color: inherit; }
   width: 1px;
   height: 36px;
   overflow: hidden;
-  background: rgba(243, 238, 246, .18);
+  background: rgba(244, 239, 232, .18);
 }
 .cue__line::after {
   content: "";
@@ -476,16 +532,24 @@ a { color: inherit; }
 .section__head .label { margin-bottom: 18px; }
 .section__title {
   font-size: clamp(2.6rem, 6vw, 6rem);
-  margin-bottom: 22px;
+  margin-bottom: calc(.2em + 14px);   /* room for the serif's tails (y, p) above the intro */
 }
 .section__head .section__title:last-child { margin-bottom: 0; }
+/* Section intro (the 1–2 sentence lead): the serif, larger and softer than body text */
 .section__lead {
-  max-width: 54ch;                /* about 60 characters per line */
-  color: var(--mute);
-  font-size: 18px;
-  line-height: 1.55;
+  max-width: 25em;                /* about 60 characters per line */
+  font-family: var(--font-serif);
+  font-size: 20px;
+  line-height: 1.3;
+  letter-spacing: .005em;
+  color: var(--ink);
+  text-wrap: pretty;
 }
 .label--mute { color: var(--mute); }
+
+/* Head variations, so every section doesn't start the same way */
+.section__head--center { margin-inline: auto; text-align: center; }
+.section__head--center .section__lead { margin-inline: auto; text-wrap: balance; }   /* even line lengths */
 
 /* Small headings inside sections (service, step, point): condensed capitals */
 .service__title,
@@ -517,11 +581,11 @@ a { color: inherit; }
 .service__num { margin-bottom: 4px; }
 .service__title { font-size: 44px; }
 .service__text { max-width: 34ch; color: var(--mute); }
-.service__spec { margin-top: 6px; }
+.service__spec { margin-top: 6px; color: var(--amber); }   /* sizes and materials */
 
 /* ----- How it works -----
-   Phones: a vertical timeline. Each number sits in a ring; a thin gradient
-   line runs from each ring down to the next one. */
+   Phones: a vertical timeline. Each number sits in a ring; a thin line
+   (bright at the ring, fading towards the next) joins the steps. */
 .steps__list {
   list-style: none;
   margin: 56px 0 0;
@@ -532,11 +596,9 @@ a { color: inherit; }
 .step {
   position: relative;
   padding-left: 68px;
-  --from: var(--violet);
-  --to: var(--magenta);
+  --from: rgba(244, 239, 232, .5);
+  --to: rgba(244, 239, 232, .14);
 }
-.step:nth-child(2) { --from: var(--magenta); --to: #f3626c; }
-.step:nth-child(3) { --from: #f3626c;        --to: var(--saffron); }
 .step:not(:last-child)::after {    /* the line down to the next ring */
   content: "";
   position: absolute;
@@ -563,7 +625,8 @@ a { color: inherit; }
 .step__title { font-size: 40px; padding-top: 6px; margin-bottom: 10px; }
 .step__text { max-width: 34ch; color: var(--mute); }
 
-/* ----- Why Trinetra ----- */
+/* ----- Why Trinetra -----
+   Phones: stacked. Big screens (section 8): headline sticky on the left. */
 .why__list {
   list-style: none;
   margin: 56px 0 0;
@@ -577,13 +640,13 @@ a { color: inherit; }
   display: grid;
   gap: 10px;
 }
-.why__item::before {               /* short gradient accent on the top line */
+.why__item::before {               /* short bright mark on the top line */
   content: "";
   position: absolute;
   left: 0; top: -1px;
   width: 40px;
   height: 2px;
-  background: var(--grad);
+  background: var(--ink);
 }
 .why__title { font-size: 36px; }
 .why__text { max-width: 38ch; color: var(--mute); }
@@ -612,6 +675,8 @@ a { color: inherit; }
   flex: none;
   width: 16px;
   height: 16px;
+  color: var(--amber);
+  transition: transform .3s ease;
 }
 .faq__icon::before,
 .faq__icon::after {
@@ -628,7 +693,7 @@ a { color: inherit; }
 .faq__a { padding: 0 36px 24px 0; }
 .faq__a p { max-width: 60ch; color: var(--mute); }
 @media (hover: hover) {
-  .faq__q:hover .faq__icon { color: var(--magenta); }
+  .faq__q:hover .faq__icon { transform: scale(1.15); }
 }
 /* Newer browsers: the answer slides open smoothly */
 @supports selector(::details-content) {
@@ -641,14 +706,17 @@ a { color: inherit; }
   .faq__item[open]::details-content { height: auto; }
 }
 
-/* ----- Work ----- */
+/* ----- Work -----
+   Headline on the RIGHT. On phones the "1 / 6" counter sits on the left. */
 .work__head {
   max-width: none;
   display: flex;
+  flex-direction: column;         /* phones: the counter sits under the intro, on the right */
   align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
+  text-align: right;
 }
+.work__head .section__lead { margin-left: auto; }
 .work__count {
   flex: none;
   padding-bottom: 6px;
@@ -695,8 +763,7 @@ a { color: inherit; }
   display: grid;
   place-items: center;
   background:
-    radial-gradient(120% 90% at 85% 0%, rgba(155, 77, 255, .16), transparent 55%),
-    radial-gradient(90% 80% at 0% 100%, rgba(255, 138, 61, .1), transparent 60%),
+    radial-gradient(120% 90% at 85% 0%, rgba(244, 239, 232, .06), transparent 55%),
     var(--panel);
 }
 .ph__frame {
@@ -705,7 +772,7 @@ a { color: inherit; }
   width: 62%;
   aspect-ratio: 2 / 1;
   transform: translate(-50%, -50%);
-  border: 1px solid rgba(243, 238, 246, .16);
+  border: 1px solid rgba(244, 239, 232, .16);
   border-radius: 4px;
 }
 .ph__frame::after {                 /* the two legs of the hoarding */
@@ -714,8 +781,8 @@ a { color: inherit; }
   left: 22%; right: 22%;
   top: 100%;
   height: 30%;
-  border-left: 1px solid rgba(243, 238, 246, .16);
-  border-right: 1px solid rgba(243, 238, 246, .16);
+  border-left: 1px solid rgba(244, 239, 232, .16);
+  border-right: 1px solid rgba(244, 239, 232, .16);
 }
 .ph__text {
   position: absolute;
@@ -729,11 +796,15 @@ a { color: inherit; }
   color: var(--mute);
 }
 
-/* ----- Contact ----- */
-.contact__side { margin-top: 48px; }
+/* ----- Contact: everything centred, very large headline ----- */
+.contact__inner { text-align: center; }
+.contact__inner .section__head { max-width: 1100px; }
+.contact__title { font-size: clamp(3.5rem, 15vw, 9.5rem); }
+.contact__side { max-width: 900px; margin: 48px auto 0; }
 .contact__list { margin: 0 0 32px; }
 .contact__row {
   display: grid;
+  justify-items: center;
   gap: 6px;
   padding: 18px 0;
   border-top: 1px solid var(--line);
@@ -761,7 +832,14 @@ a { color: inherit; }
 .footer__brand { display: flex; align-items: center; gap: 14px; }
 .footer__brand img { width: 49px; height: auto; }
 .footer__name { font-size: 28px; color: var(--ink); }
-.footer__tag { margin-top: 4px; }
+.footer__tag {                    /* "Imagine · Believe · Achieve" in the serif italic */
+  margin-top: 2px;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 19px;
+  line-height: 1.2;
+  letter-spacing: .01em;
+}
 .footer__info { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 
 /* ----- Sticky action bar (phones only, after the film) ----- */
@@ -773,7 +851,7 @@ a { color: inherit; }
   grid-template-columns: 1fr 1.4fr;
   gap: 10px;
   padding: 10px var(--gutter) calc(var(--safe-b) + 10px);
-  background: rgba(10, 8, 16, .78);
+  background: rgba(11, 10, 13, .78);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
           backdrop-filter: blur(14px) saturate(140%);
   box-shadow: 0 -1px 0 var(--line);
@@ -787,7 +865,6 @@ a { color: inherit; }
   transition: transform .6s var(--ease-out), visibility 0s;
 }
 .actionbar__btn { min-height: 50px; padding: 0 16px; }
-.btn--grad { background: var(--grad); color: #fff; }
 
 /* ----- Scroll reveals -----
    Only hidden when main.js says reveals are running (class "reveal-on"),
@@ -798,7 +875,7 @@ a { color: inherit; }
   transition: opacity .9s ease, transform 1.1s var(--ease-out);
 }
 .reveal-on .reveal .line > span {
-  transform: translateY(105%);
+  transform: translateY(130%);
   transition: transform 1s var(--ease-out) calc(var(--i, 0) * .09s + .1s);
 }
 .reveal-on .reveal.is-in { opacity: 1; transform: none; }
@@ -818,8 +895,7 @@ a { color: inherit; }
   padding: calc(var(--header-h) + 32px) var(--gutter) calc(var(--safe-b) + 40px);
   overflow: hidden;
   background:
-    radial-gradient(90% 60% at 80% 10%, rgba(155, 77, 255, .14), transparent 60%),
-    radial-gradient(80% 50% at 0% 100%, rgba(255, 138, 61, .08), transparent 60%),
+    radial-gradient(90% 60% at 80% 10%, rgba(255, 162, 58, .07), transparent 60%),   /* a faint floodlight glow */
     var(--night);
 }
 .nf__board {
@@ -828,9 +904,9 @@ a { color: inherit; }
   width: min(78vw, 560px);
   aspect-ratio: 2 / 1;
   margin-bottom: 14%;
-  border: 1px solid rgba(243, 238, 246, .2);
+  border: 1px solid rgba(244, 239, 232, .2);
   border-radius: 6px;
-  background: linear-gradient(180deg, rgba(243, 238, 246, .04), rgba(243, 238, 246, 0));
+  background: linear-gradient(180deg, rgba(244, 239, 232, .04), rgba(244, 239, 232, 0));
 }
 .nf__board::before {                /* the lamps on top */
   content: "";
@@ -838,15 +914,15 @@ a { color: inherit; }
   left: 10%; right: 10%;
   top: -12px;
   height: 4px;
-  background: radial-gradient(circle, rgba(243, 238, 246, .55) 2px, transparent 3px) 0 0 / 25% 4px repeat-x;
+  background: radial-gradient(circle, rgba(244, 239, 232, .55) 2px, transparent 3px) 0 0 / 25% 4px repeat-x;
 }
 .nf__board span {                   /* the two legs */
   position: absolute;
   left: 24%; right: 24%;
   top: 100%;
   height: 46%;
-  border-left: 1px solid rgba(243, 238, 246, .2);
-  border-right: 1px solid rgba(243, 238, 246, .2);
+  border-left: 1px solid rgba(244, 239, 232, .2);
+  border-right: 1px solid rgba(244, 239, 232, .2);
 }
 .nf__text .label { margin-bottom: 16px; }
 .nf__title { margin-bottom: 18px; }
@@ -913,6 +989,30 @@ a { color: inherit; }
       rgba(var(--shade), .85) 0%, rgba(var(--shade), .6) 30%, rgba(var(--shade), 0) 55%);
   }
 
+  /* Top-RIGHT cards: the same gradient, mirrored, so it comes from the
+     top-right corner and fades out towards the left */
+  .align-right.at-desk-top .scrim {
+    -webkit-mask-image: linear-gradient(to left, #000 36%, transparent 80%);
+            mask-image: linear-gradient(to left, #000 36%, transparent 80%);
+  }
+  .scene--bright.align-right.at-desk-top .scrim {
+    -webkit-mask-image: linear-gradient(to left, #000 45%, transparent 90%);
+            mask-image: linear-gradient(to left, #000 45%, transparent 90%);
+  }
+  /* Bottom-CENTRE card (Light): wider, with the short headline on ONE line,
+     so the card stays low and never reaches the hoarding above it */
+  .align-center .card { max-width: 72vw; }
+  .align-center .display .line { display: inline-block; vertical-align: bottom; }
+  .align-center .display .line + .line { margin-left: .1em; }
+
+  /* Bottom-CENTRE cards: a plain gradient up from the bottom, full width */
+  .align-center.at-desk-bottom .scrim {
+    -webkit-mask-image: none;
+            mask-image: none;
+    background: linear-gradient(to top,
+      rgba(var(--shade), .85) 0%, rgba(var(--shade), .7) 30%, rgba(var(--shade), .3) 52%, rgba(var(--shade), 0) 70%);
+  }
+
   .film-on .cue { left: auto; right: 32px; transform: none; }
 }
 
@@ -934,11 +1034,13 @@ a { color: inherit; }
     line-height: 1.2;
     letter-spacing: .18em;
     text-transform: uppercase;
-    color: var(--ink);
+    color: var(--amber);
     opacity: 0;
     transition: opacity .4s ease, top .7s var(--ease-out);
   }
   .progress__name.is-on { opacity: 1; }
+  /* Right-aligned cards keep clear of the chapter name on the right edge */
+  .film-on .scene.align-right { padding-right: max(5.5vw, 150px, var(--safe-r)); }
 }
 
 /* Phones turned sideways: very little height, so everything gets tighter */
@@ -970,7 +1072,7 @@ a { color: inherit; }
   .header__brand span { font-size: 26px; }
 
   .section { padding: clamp(112px, 11vw, 192px) 0; }
-  .section__lead { font-size: 19px; }
+  .section__lead { font-size: clamp(22px, 1.8vw, 26px); }
 
   /* What we do: three columns */
   .services__list {
@@ -1006,15 +1108,19 @@ a { color: inherit; }
   }
   .work__item:nth-child(even) { transition-delay: .12s; }
 
-  /* Contact: headline left, details right */
-  .contact__grid {
+  /* Contact: the three details side by side, still centred */
+  .contact__side { margin-top: clamp(56px, 6vw, 96px); }
+  .contact__list {
     display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 64px;
-    align-items: end;
+    grid-template-columns: repeat(3, 1fr);
+    margin-bottom: 48px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
   }
-  .contact__side { margin-top: 0; }
-  .btn--wide { width: auto; }
+  .contact__row,
+  .contact__row:last-child { border: 0; padding: 28px 16px; }
+  .contact__row + .contact__row { border-left: 1px solid var(--line); }
+  .btn--wide { width: auto; min-width: 280px; }
 
   /* Footer: one row; no sticky bar on bigger screens */
   .footer { padding-bottom: 56px; }
@@ -1068,6 +1174,21 @@ a { color: inherit; }
     align-items: start;
   }
   .faq__list { margin-top: 0; }
+
+  /* Why Trinetra: headline sticks on the left while the 4 points scroll on the right */
+  .why__grid {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: clamp(48px, 6vw, 112px);
+    align-items: start;
+  }
+  .why__head {
+    position: sticky;
+    top: calc(var(--header-h) + 48px);
+  }
+  .why__list { grid-template-columns: 1fr; margin-top: 0; }
+  .why__item { padding: 40px 0 56px; }
+  .why__item:nth-child(even) { transition-delay: 0s; }
 }
 
 @media (min-width: 1100px) {

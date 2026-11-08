@@ -247,7 +247,13 @@
        - labels, body text and buttons (.fade) follow FADE_DELAY frames later
        - the whole card fades out over the last FADE_OUT frames before data-out
      A card whose data-out is the last frame (the finale) never fades out. */
-  var RISE = 15, STAGGER = 3, FADE_DELAY = 6, FADE_IN = 8, FADE_OUT = 12;
+  //   - the card drifts DRIFT px in from its own side (left cards from the
+  //     left, right cards from the right; centred cards only rise)
+  var RISE = 15, STAGGER = 3, FADE_DELAY = 6, FADE_IN = 8, FADE_OUT = 12, DRIFT = 12;
+  // How far a hidden line sits below its mask (CSS uses the same number).
+  // A bit more than 100%, because the masks leave room under each line for
+  // the serif's tails (y, g, p).
+  var LINE_HIDE = 130;
   // The opening card is on screen at frame 1, before any scrolling, so it
   // plays in by itself when the page opens (INTRO_FPS frames per second).
   var INTRO_FPS = 18, INTRO_FRAMES = 40;
@@ -264,6 +270,9 @@
     el._stay = el._out >= FRAME_COUNT;
     el._lines = el.querySelectorAll('.line > span');
     el._fades = el.querySelectorAll('.fade');
+    el._card = el.querySelector('.card');
+    el._drift = el.classList.contains('align-right') ? DRIFT
+              : el.classList.contains('align-center') ? 0 : -DRIFT;
     el._on = false;
   });
 
@@ -293,7 +302,12 @@
       setStyle(el, 'opacity', alpha.toFixed(3));
       for (var j = 0; j < el._lines.length; j++) {
         var x = easeOut(clamp01((t - j * STAGGER) / RISE));
-        setStyle(el._lines[j], 'transform', x === 1 ? 'none' : 'translateY(' + ((1 - x) * 105).toFixed(2) + '%)');
+        setStyle(el._lines[j], 'transform', x === 1 ? 'none' : 'translateY(' + ((1 - x) * LINE_HIDE).toFixed(2) + '%)');
+      }
+      // Sideways drift of the whole card, from its own side
+      if (el._card && el._drift) {
+        x = easeOut(clamp01(t / (RISE + FADE_DELAY)));
+        setStyle(el._card, 'transform', x === 1 ? 'none' : 'translateX(' + ((1 - x) * el._drift).toFixed(1) + 'px)');
       }
       x = easeOut(clamp01((t - FADE_DELAY) / RISE));
       for (j = 0; j < el._fades.length; j++) {
@@ -329,6 +343,8 @@
     // A chapter's name stays until the next one starts; the last one ends with its card
     if (current && current === chapters[chapters.length - 1] && frameNumber > current.end) current = null;
     if (current !== shownChapter) {
+      if (shownChapter) shownChapter.tick.classList.remove('is-current');
+      if (current) current.tick.classList.add('is-current');      // amber tick
       shownChapter = current;
       if (current) {
         chapterName.textContent = current.name;
