@@ -2,6 +2,12 @@
    Trinetra v2 · style.css
    Written PHONE FIRST: the plain rules are for phones.
    Bigger screens get extra rules inside @media blocks.
+
+   Contents
+   1. Design tokens      5. Header
+   2. Reset              6. The film (static layout, then film mode)
+   3. Type               7. Bigger screens
+   4. Buttons and links
    ========================================================= */
 
 /* ---------- 1. Design tokens (colours, fonts, timing) ---------- */
@@ -10,6 +16,7 @@
   --panel:   #15121c;   /* cards and panels */
   --ink:     #f3eef6;   /* main text */
   --mute:    #a89eb2;   /* secondary text */
+  --line:    rgba(243, 238, 246, .14);
   --violet:  #9b4dff;
   --magenta: #e8399a;
   --saffron: #ff8a3d;
@@ -23,11 +30,16 @@
 
   --gutter: 20px;                              /* side padding on phones */
   --safe-b: env(safe-area-inset-bottom, 0px); /* iPhone home-bar space */
+  --header-h: 64px;
 }
 
 /* ---------- 2. Basic reset ---------- */
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; background: var(--night); }
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--night);
+  color-scheme: dark;
+}
 body {
   margin: 0;
   background: var(--night);
@@ -36,18 +48,42 @@ body {
   font-size: 17px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
   overflow-x: clip;               /* never any sideways scrolling */
 }
 img, canvas { display: block; max-width: 100%; }
 h1, h2, h3, p { margin: 0; }
 a { color: inherit; }
 
+/* Visible keyboard focus everywhere (only for keyboard, not mouse clicks) */
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* "Skip to content" link: hidden until a keyboard user tabs to it */
+.skip {
+  position: fixed;
+  left: 12px; top: 12px;
+  z-index: 100;
+  padding: 14px 18px;
+  background: var(--ink);
+  color: var(--night);
+  border-radius: 999px;
+  font-weight: 500;
+  text-decoration: none;
+  transform: translateY(-160%);
+}
+.skip:focus-visible { transform: none; }
+
 /* ---------- 3. Type styles ---------- */
-/* Label: small mono capitals, used above headlines */
+/* Label: small mono capitals, used above headlines and for specs */
 .label {
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 500;
+  line-height: 1.4;
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--ink);
@@ -58,7 +94,7 @@ a { color: inherit; }
 .display {
   font-family: var(--serif);
   font-weight: 400;
-  font-size: 11vw;
+  font-size: 12vw;
   line-height: .95;
   letter-spacing: -.01em;
   text-wrap: balance;
@@ -72,14 +108,15 @@ a { color: inherit; }
           background-clip: text;
   color: transparent;
   padding-right: .08em;           /* room for the italic overhang */
+  -webkit-box-decoration-break: clone;
+          box-decoration-break: clone;
 }
 .c-violet  { color: var(--violet); }
 .c-magenta { color: var(--magenta); }
 .c-saffron { color: var(--saffron); }
 
-/* ---------- 4. Line-by-line mask reveal ----------
-   .line is a window with overflow: hidden.
-   The span inside starts pushed down (out of the window) and rises in. */
+/* Line mask: .line is a window with overflow hidden; the span inside
+   can rise into it (see film mode below). */
 .line {
   display: block;
   overflow: hidden;
@@ -88,8 +125,9 @@ a { color: inherit; }
 }
 .line > span { display: block; }
 
-/* ---------- 5. Buttons ---------- */
+/* ---------- 4. Buttons and links ---------- */
 .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
 .btn {
   position: relative;
   display: inline-flex;
@@ -102,143 +140,197 @@ a { color: inherit; }
   text-decoration: none;
   overflow: hidden;
   isolation: isolate;
+  transition: color .45s var(--ease-out), box-shadow .3s ease;
 }
+.btn > span { position: relative; z-index: 1; }
+
+/* Primary: white pill. On hover a gradient sweeps in from the left. */
 .btn--primary { background: #fff; color: var(--night); }
-.btn--ghost   { color: var(--ink); box-shadow: inset 0 0 0 1px rgba(243, 238, 246, .35); }
-
-/* =========================================================
-   6. THE SCROLL FILM
-   Without the "film-on" class (no JavaScript) the film is shown
-   as a simple poster with the text visible.
-   ========================================================= */
-.film { position: relative; background: #000; }
-
-.film__stage {
-  position: relative;
-  height: 100vh;
-  height: 100lvh;                 /* the largest phone screen, so no gap when the address bar hides */
-  overflow: hidden;
-  background: #000 url("../assets/poster.webp") center / cover no-repeat;
-}
-.film__canvas {
+.btn--primary::before {
+  content: "";
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  background: var(--grad);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .55s var(--ease-out);
+}
+.btn--ghost { color: var(--ink); box-shadow: inset 0 0 0 1px rgba(243, 238, 246, .35); }
+
+/* Hover effects only on devices that really hover (mouse, trackpad) */
+@media (hover: hover) {
+  .btn--primary:hover { color: #fff; }
+  .btn--primary:hover::before { transform: scaleX(1); }
+  .btn--ghost:hover { box-shadow: inset 0 0 0 1px var(--ink); }
+}
+/* Touch: a quick press feedback instead */
+.btn:active { transform: scale(.98); }
+
+/* Text link: underline grows from left to right on hover */
+.link {
+  text-decoration: none;
+  background: linear-gradient(currentColor, currentColor) left bottom / 0 1px no-repeat;
+  transition: background-size .45s var(--ease-out);
+}
+@media (hover: hover) {
+  .link:hover { background-size: 100% 1px; }
 }
 
-/* The text layer is one SMALL screen tall (svh), so text at the
-   bottom is never hidden behind the phone's address bar. */
-.film__ui {
-  position: absolute;
+/* ---------- 5. Header ---------- */
+.header {
+  position: fixed;
   inset: 0 0 auto 0;
-  height: 100vh;
-  height: 100svh;
+  z-index: 50;
+  height: var(--header-h);
+  padding: 0 calc(var(--gutter) - 12px);   /* links have their own 12px padding */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background-color .5s ease, opacity .5s ease, -webkit-backdrop-filter .5s ease, backdrop-filter .5s ease;
+}
+.header__brand,
+.header__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;               /* 48px tap areas */
+  padding: 0 12px;
+  text-decoration: none;
+}
+.header__brand { gap: 8px; }
+.header__brand img { width: auto; height: 28px; }
+.header__brand span {
+  font-family: var(--serif);
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: .01em;
+}
+.header__link {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  background-position: 12px calc(50% + 10px);
+  background-size: 0 1px;
+}
+@media (hover: hover) {
+  .header__link:hover { background-size: calc(100% - 24px) 1px; }
 }
 
-.scene { position: absolute; inset: 0; pointer-events: none; }
+/* Subtle during the film; a soft glass bar after it */
+.film-on .header { opacity: .82; }
+.film-on .header:focus-within,
+.is-past-film .header { opacity: 1; }
+.is-past-film .header {
+  background: rgba(10, 8, 16, .72);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+          backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 1px 0 var(--line);
+}
 
-/* Soft dark gradients behind text, only where needed */
-.scrim { position: absolute; inset: 0; }
+/* =========================================================
+   6. THE FILM
+   6a. Static layout (reduced motion, or no JavaScript):
+       four stacked scenes, each a still photo with its text.
+   ========================================================= */
+.film { position: relative; background: #000; }
+.film__canvas, .progress, .cue { display: none; }
+
+.scene {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  padding: calc(var(--header-h) + 24px) var(--gutter) calc(var(--safe-b) + 40px);
+}
+.still { position: absolute; inset: 0; }
+.still img { width: 100%; height: 100%; object-fit: cover; }
+.still--dim::after { content: ""; position: absolute; inset: 0; background: rgba(5, 4, 9, .55); }
+
+.scrim { position: absolute; inset: 0; pointer-events: none; }
 .scrim--bottom,
 .scrim--finale {
   background: linear-gradient(to top,
     rgba(5, 4, 9, .92) 0%, rgba(5, 4, 9, .72) 26%, rgba(5, 4, 9, .25) 48%, rgba(5, 4, 9, 0) 62%);
 }
 
-/* Opening + finale cards sit at the BOTTOM on phones */
-.card {
+.card { position: relative; }
+.card .label { margin-bottom: 14px; }
+.card--finale .actions { margin-top: 24px; }
+.card--finale .btn { flex: 1 1 auto; }
+
+.scene--center {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+/* Still of the lit hoarding: words go to the bottom, never over the logo */
+.scene--trio { justify-content: flex-end; padding-bottom: calc(var(--safe-b) + 56px); }
+.film-on .scene--trio { justify-content: center; }
+.scene--trio .still--dim::after {
+  background: linear-gradient(to top, rgba(5, 4, 9, .9), rgba(5, 4, 9, .3) 50%, rgba(5, 4, 9, 0) 75%);
+}
+
+.stack { position: relative; display: grid; gap: .1em; }
+.display--center { font-size: 11vw; }
+
+.trio {
+  position: relative;
+  display: flex;
+  flex-direction: column;         /* stacked on phones */
+  align-items: center;
+  font-family: var(--serif);
+  font-size: 12vw;
+  line-height: .95;
+}
+.trio__word { display: block; }
+
+/* ---------- 6b. Film mode (JavaScript on, motion allowed) ---------- */
+.film-on .film { height: 1500vh; height: 1500svh; }   /* about 15 screens of scrolling */
+
+.film-on .film__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100lvh;                 /* largest phone screen: no gap when the address bar hides */
+  overflow: hidden;
+  background: #000 url("../assets/poster.webp") center / cover no-repeat;
+}
+.film-on .film__canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* The text layer is one SMALL screen tall (svh), so text at the
+   bottom is never hidden behind the phone's address bar. */
+.film-on .film__ui {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 100vh;
+  height: 100svh;
+}
+.film-on .still { display: none; }      /* hidden = never downloaded (lazy) */
+
+.film-on .scene {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  padding: 0;
+  pointer-events: none;
+}
+.film-on .card {
   position: absolute;
   left: var(--gutter);
   right: var(--gutter);
   bottom: calc(var(--safe-b) + 28px);
 }
-.card .label { margin-bottom: 14px; }
-.card--open { bottom: calc(var(--safe-b) + 92px); }   /* leaves room for the Scroll cue */
-.card--finale .actions { margin-top: 24px; }
-.card--finale .btn { flex: 1 1 auto; }
-
-/* Black moments: centred */
-.scene--center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 0 var(--gutter);
-}
-.stack { display: grid; gap: .1em; }
-.display--center { font-size: 10.5vw; }
-
-.trio {
-  display: flex;
-  flex-direction: column;         /* stacked on phones */
-  align-items: center;
-  gap: .02em;
-  font-family: var(--serif);
-  font-size: 16vw;
-  line-height: .95;
-}
-.trio__word { display: block; }
-
-/* Progress line on the right edge */
-.progress {
-  position: absolute;
-  top: 0; right: 0; bottom: 0;
-  width: 2px;
-  background: rgba(243, 238, 246, .1);
-}
-.progress__fill {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, var(--violet), var(--magenta), var(--saffron));
-  transform: scaleY(0);
-  transform-origin: top;
-}
-
-/* "Scroll" cue */
-.cue {
-  position: absolute;
-  left: 50%;
-  bottom: calc(var(--safe-b) + 22px);
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  transition: opacity .6s ease;
-}
-.cue__text {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--mute);
-}
-.cue__line {
-  position: relative;
-  width: 1px;
-  height: 36px;
-  overflow: hidden;
-  background: rgba(243, 238, 246, .18);
-}
-.cue__line::after {
-  content: "";
-  position: absolute;
-  left: 0; top: 0;
-  width: 1px; height: 100%;
-  background: var(--ink);
-  animation: cue 2s var(--ease-out) infinite;
-}
-@keyframes cue {
-  0%   { transform: translateY(-100%); }
-  60%  { transform: translateY(100%); }
-  100% { transform: translateY(100%); }
-}
-.cue.is-hidden { opacity: 0; }
-
-/* ---------- 6b. Film mode (JavaScript on, motion allowed) ---------- */
-.film-on .film { height: 1500vh; height: 1500svh; }   /* about 15 screens of scrolling */
-.film-on .film__stage { position: sticky; top: 0; }
+.film-on .card--open { bottom: calc(var(--safe-b) + 92px); }   /* room for the Scroll cue */
+.film-on .scene--center { padding: 0 var(--gutter); }
 
 /* Timed elements are hidden until film.js switches them on */
 .film-on .timed {
@@ -275,17 +367,74 @@ a { color: inherit; }
 }
 .film-on .timed.is-on .actions.fade { opacity: 1; transition-delay: .5s; }
 
+/* Progress line on the right edge */
+.film-on .progress {
+  display: block;
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 2px;
+  background: rgba(243, 238, 246, .1);
+}
+.progress__fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, var(--violet), var(--magenta), var(--saffron));
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
+/* "Scroll" cue */
+.film-on .cue {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-b) + 22px);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: opacity .6s ease;
+}
+.cue__text {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.cue__line {
+  position: relative;
+  width: 1px;
+  height: 36px;
+  overflow: hidden;
+  background: rgba(243, 238, 246, .18);
+}
+.cue__line::after {
+  content: "";
+  position: absolute;
+  left: 0; top: 0;
+  width: 1px; height: 100%;
+  background: var(--ink);
+  animation: cue 2s var(--ease-out) infinite;
+}
+@keyframes cue {
+  0%   { transform: translateY(-100%); }
+  60%, 100% { transform: translateY(100%); }
+}
+.cue.is-hidden { opacity: 0; }
+
 /* Temporary end-of-page block (Phase 3 replaces this) */
 .after { min-height: 60vh; background: var(--night); }
 
 /* =========================================================
    7. BIGGER SCREENS
    "Landscape" here means the screen is not tall and narrow
-   (same rule film.js uses to pick desktop frames).
+   (the same rule film.js uses to pick desktop frames).
    ========================================================= */
 @media (min-aspect-ratio: 4/5) {
   .display { font-size: clamp(40px, min(5.2vw, 9.5vh), 120px); }
   .display--center { font-size: clamp(40px, min(6vw, 11vh), 132px); }
+  .label { font-size: 12px; }
 
   .trio {
     flex-direction: row;          /* Imagine. Believe. Achieve. in a row */
@@ -293,26 +442,51 @@ a { color: inherit; }
     font-size: clamp(44px, min(7vw, 13vh), 150px);
   }
 
-  .card {
-    left: clamp(24px, 6vw, 112px);
-    right: auto;
-    max-width: 44vw;
-  }
-  .card--open { bottom: clamp(40px, 11vh, 120px); }
-
-  /* Finale: left third, vertically centred (the hoarding is on the right) */
-  .card--finale {
-    top: 50%;
-    bottom: auto;
-    transform: translateY(-50%);
-    max-width: 36vw;
-  }
+  /* Static layout: text in the left part of each scene */
+  .scene { padding-left: clamp(24px, 6vw, 112px); padding-right: clamp(24px, 6vw, 112px); }
+  .card { max-width: 44vw; }
+  .scene--finale { justify-content: center; }
+  .card--finale { max-width: 36vw; }
   .card--finale .btn { flex: 0 0 auto; }
   .scrim--finale {
     background: linear-gradient(to right,
       rgba(5, 4, 9, .85) 0%, rgba(5, 4, 9, .55) 28%, rgba(5, 4, 9, 0) 52%);
   }
 
-  .cue { left: auto; right: 32px; transform: none; }
-  .label { font-size: 12px; }
+  /* Film mode positions */
+  .film-on .card {
+    left: clamp(24px, 6vw, 112px);
+    right: auto;
+  }
+  .film-on .card--open { bottom: clamp(40px, 11vh, 120px); }
+  /* Finale: left third, vertically centred (the hoarding is on the right) */
+  .film-on .card--finale {
+    top: calc(50% + var(--header-h) / 2);   /* centred in the space below the header */
+    bottom: auto;
+    transform: translateY(-50%);
+    max-width: max(36vw, 380px);             /* both buttons fit in one row */
+  }
+  .film-on .cue { left: auto; right: 32px; transform: none; }
+}
+
+/* Phones turned sideways: very little height, so tighten the finale */
+@media (min-aspect-ratio: 4/5) and (max-height: 500px) {
+  .card--finale .label { margin-bottom: 8px; }
+  .card--finale .actions { margin-top: 14px; }
+  .card--finale .btn { min-height: 48px; padding: 0 20px; font-size: 15px; }
+}
+
+@media (min-width: 768px) {
+  :root { --gutter: 32px; --header-h: 72px; }
+  .header__brand img { height: 32px; }
+  .header__brand span { font-size: 26px; }
+}
+
+/* Motion off: no animations, no transitions */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
 }

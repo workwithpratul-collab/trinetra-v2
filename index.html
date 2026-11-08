@@ -30,12 +30,23 @@
 </head>
 <body>
 
-  <main id="top">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <!-- Small fixed header: logo left, Contact right -->
+  <header class="header">
+    <a class="header__brand" href="#top" aria-label="Trinetra Creations, back to top">
+      <img src="assets/logo-mark.png" width="118" height="96" alt="">
+      <span>Trinetra</span>
+    </a>
+    <a class="header__link link" href="#contact">Contact</a>
+  </header>
+
+  <main id="main">
 
     <!-- ============ THE SCROLL FILM ============
          .film is very tall. Inside it, .film__stage "sticks" to the screen
          while you scroll, and the canvas plays one frame per scroll step. -->
-    <section class="film" id="film" aria-label="Film: from a blank sheet to a city hoarding">
+    <section class="film" id="top" aria-label="Film: from a blank sheet to a city hoarding">
       <div class="film__stage">
         <canvas class="film__canvas" role="img"
           aria-label="Short film: a blank white sheet is printed with Trinetra's design, carried out by the crew, installed high above the city, and lit up at night as a giant Trinetra hoarding."></canvas>
@@ -44,7 +55,13 @@
         <div class="film__ui">
 
           <!-- Scene 1: opening (frames 1–120) -->
+          <!-- Each scene has a still photo. It is only shown (and only downloaded)
+               when the film is off: reduced motion or no JavaScript. -->
           <div class="scene scene--open">
+            <picture class="still">
+              <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0040.webp" width="405" height="720">
+              <img src="assets/frames/desktop/f0040.webp" width="1280" height="720" loading="lazy" alt="A blank white sheet floats above a large-format printer in the Trinetra workshop.">
+            </picture>
             <div class="scrim scrim--bottom timed" data-in="1" data-out="120"></div>
             <div class="card card--open timed" data-in="1" data-out="120">
               <p class="label fade">Trinetra Creations · Raipur</p>
@@ -58,6 +75,10 @@
 
           <!-- Scene 2: first black moment (frames 588–667) -->
           <div class="scene scene--center">
+            <picture class="still still--dim">
+              <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0700.webp" width="405" height="720">
+              <img src="assets/frames/desktop/f0700.webp" width="1280" height="720" loading="lazy" alt="Evening sky over the city, where the hoarding will go up.">
+            </picture>
             <div class="stack">
               <p class="display display--center timed" data-in="588" data-out="650">
                 <span class="line" style="--i:0"><span>From our floor…</span></span>
@@ -69,7 +90,11 @@
           </div>
 
           <!-- Scene 3: second black moment (frames 836–924) -->
-          <div class="scene scene--center">
+          <div class="scene scene--center scene--trio">
+            <picture class="still still--dim">
+              <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f1000.webp" width="405" height="720">
+              <img src="assets/frames/desktop/f1000.webp" width="1280" height="720" loading="lazy" alt="The finished hoarding lights up above the city at night.">
+            </picture>
             <p class="trio">
               <span class="trio__word timed" data-in="836" data-out="924"><span class="line"><span class="c-violet">Imagine.</span></span></span>
               <span class="trio__word timed" data-in="861" data-out="924"><span class="line"><span class="c-magenta">Believe.</span></span></span>
@@ -79,6 +104,10 @@
 
           <!-- Scene 4: finale (frame 1080 to the end, stays) -->
           <div class="scene scene--finale">
+            <picture class="still">
+              <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f1160.webp" width="405" height="720">
+              <img src="assets/frames/desktop/f1160.webp" width="1280" height="720" loading="lazy" alt="A giant lit hoarding showing the Trinetra logo stands over a busy road at night.">
+            </picture>
             <div class="scrim scrim--finale timed" data-in="1080" data-out="1189"></div>
             <div class="card card--finale timed" data-in="1080" data-out="1189">
               <p class="label fade">Imagine · Believe · Achieve</p>
@@ -107,6 +136,9 @@
 
   </main>
 
+  <!-- Lenis (smooth scrolling), pinned version, then our own scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js" defer></script>
   <script src="js/film.js" defer></script>
+  <script src="js/main.js" defer></script>
 </body>
 </html>
