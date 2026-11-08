@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Trinetra Creations | Hoardings & Flex Printing in Raipur</title>
+
+  <!-- Turn on "film mode" before anything paints.
+       If JavaScript is off, or the visitor prefers reduced motion,
+       the page stays in the simple stacked layout instead. -->
+  <script>
+    (function () {
+      var root = document.documentElement;
+      root.classList.add('js');
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        root.classList.add('film-on');
+      }
+    })();
+  </script>
+
+  <!-- Fonts: Instrument Serif (headlines), Geist (body), Geist Mono (labels) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
+
+  <!-- The poster is the very first thing people see, so fetch it early -->
+  <link rel="preload" as="image" href="assets/poster.webp" fetchpriority="high">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <main id="top">
+
+    <!-- ============ THE SCROLL FILM ============
+         .film is very tall. Inside it, .film__stage "sticks" to the screen
+         while you scroll, and the canvas plays one frame per scroll step. -->
+    <section class="film" id="film" aria-label="Film: from a blank sheet to a city hoarding">
+      <div class="film__stage">
+        <canvas class="film__canvas" role="img"
+          aria-label="Short film: a blank white sheet is printed with Trinetra's design, carried out by the crew, installed high above the city, and lit up at night as a giant Trinetra hoarding."></canvas>
+
+        <!-- Everything the visitor reads sits in .film__ui (exactly one small-screen tall) -->
+        <div class="film__ui">
+
+          <!-- Scene 1: opening (frames 1–120) -->
+          <div class="scene scene--open">
+            <div class="scrim scrim--bottom timed" data-in="1" data-out="120"></div>
+            <div class="card card--open timed" data-in="1" data-out="120">
+              <p class="label fade">Trinetra Creations · Raipur</p>
+              <h1 class="display">
+                <span class="line" style="--i:0"><span>Every hoarding</span></span>
+                <span class="line" style="--i:1"><span>starts as a</span></span>
+                <span class="line" style="--i:2"><span><em class="grad">blank sheet.</em></span></span>
+              </h1>
+            </div>
+          </div>
+
+          <!-- Scene 2: first black moment (frames 588–667) -->
+          <div class="scene scene--center">
+            <div class="stack">
+              <p class="display display--center timed" data-in="588" data-out="650">
+                <span class="line" style="--i:0"><span>From our floor…</span></span>
+              </p>
+              <p class="display display--center timed" data-in="613" data-out="667">
+                <span class="line" style="--i:0"><span><em class="grad">…to your skyline.</em></span></span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Scene 3: second black moment (frames 836–924) -->
+          <div class="scene scene--center">
+            <p class="trio">
+              <span class="trio__word timed" data-in="836" data-out="924"><span class="line"><span class="c-violet">Imagine.</span></span></span>
+              <span class="trio__word timed" data-in="861" data-out="924"><span class="line"><span class="c-magenta">Believe.</span></span></span>
+              <span class="trio__word timed" data-in="887" data-out="924"><span class="line"><span class="c-saffron">Achieve.</span></span></span>
+            </p>
+          </div>
+
+          <!-- Scene 4: finale (frame 1080 to the end, stays) -->
+          <div class="scene scene--finale">
+            <div class="scrim scrim--finale timed" data-in="1080" data-out="1189"></div>
+            <div class="card card--finale timed" data-in="1080" data-out="1189">
+              <p class="label fade">Imagine · Believe · Achieve</p>
+              <h2 class="display">
+                <span class="line" style="--i:0"><span>Your brand,</span></span>
+                <span class="line" style="--i:1"><span><em class="grad">seen by the</em></span></span>
+                <span class="line" style="--i:2"><span><em class="grad">whole city.</em></span></span>
+              </h2>
+              <div class="actions fade">
+                <a class="btn btn--primary" href="#contact"><span>Plan your hoarding</span></a>
+                <a class="btn btn--ghost" href="#work"><span>See our work</span></a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thin progress line (right edge) and the "Scroll" cue -->
+          <div class="progress" aria-hidden="true"><span class="progress__fill"></span></div>
+          <div class="cue" aria-hidden="true"><span class="cue__text">Scroll</span><span class="cue__line"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Temporary end of page (real sections arrive in Phase 3) -->
+    <section class="after" id="work"></section>
+    <section class="after" id="contact"></section>
+
+  </main>
+
+  <script src="js/film.js" defer></script>
+</body>
+</html>
