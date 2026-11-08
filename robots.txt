@@ -1,0 +1,17 @@
+# DEMO PROTECTION: this site is a demo for client review.
+# "Disallow: /" asks all search engines not to crawl any page.
+#
+# When the client approves the site:
+#   1. Change "Disallow: /" below to "Allow: /"
+#   2. In index.html, change the robots meta tag to: content="index, follow"
+#   3. Remove the "#" in front of the Sitemap line
+#
+# Note: on GitHub Pages this file only takes effect at the root of a domain
+# (for example on a custom domain). The noindex meta tag is what protects
+# a project site like /trinetra-v2/, so keep both in sync.
+
+User-agent: *
+Disallow: /
+
+# SITE BASE URL is in the line below
+# Sitemap: https://workwithpratul-collab.github.io/trinetra-v2/sitemap.xml

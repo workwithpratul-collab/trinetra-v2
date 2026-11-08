@@ -25,7 +25,7 @@
 
   // Slow connection or Save-Data on? Then only load every 2nd frame.
   var conn = navigator.connection || {};
-  var LITE = !!conn.saveData || /(^|-)2g$/.test(conn.effectiveType || '');
+  var LITE = !!conn.saveData || /^(slow-2g|2g|3g)$/.test(conn.effectiveType || '');
 
   // Each frame normally gets the same amount of scroll. Some stretches get
   // MORE scroll ("weight") so text cards stay on screen longer.
@@ -136,9 +136,9 @@
   }
 
   /* ---------- Drawing ---------- */
-  var poster = new Image();
-  poster.src = 'assets/poster.webp';
-  poster.onload = function () { needsDraw = true; };
+  // Shown until the first frame arrives (same files the <head> preloads)
+  var posters = { desktop: new Image(), portrait: new Image() };
+  posters.desktop.onload = posters.portrait.onload = function () { needsDraw = true; };
 
   // Like CSS object-fit: cover. Desktop frames get the extra zoom and a
   // crop that takes at least 40px off the right edge (hides the watermark).
@@ -181,8 +181,8 @@
     if (n >= 0) {
       var isDesktop = active.name === 'desktop';
       drawCover(active.imgs[n], isDesktop, isDesktop ? null : portraitFocus(n));
-    } else if (poster.complete && poster.naturalWidth) {
-      drawCover(poster, true);                     // poster is a desktop frame
+    } else if (posters[active.name].naturalWidth) {
+      drawCover(posters[active.name], active.name === 'desktop');
     } else {
       return;
     }
@@ -213,6 +213,8 @@
     var name = pickSetName();
     if (!active || active.name !== name) {
       active = sets[name];
+      var poster = posters[name];
+      if (!poster.src) poster.src = name === 'desktop' ? 'assets/poster.webp' : 'assets/frames/portrait/f0001.webp';
       buildQueue(active, currentFrame());
       needsDraw = true;
       pump();

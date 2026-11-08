@@ -3,7 +3,64 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Trinetra Creations | Hoardings & Flex Printing in Raipur</title>
+  <title>Trinetra Creations | Hoardings &amp; Flex Printing in Raipur</title>
+  <meta name="description" content="Trinetra Creations designs, prints and installs hoardings and flex banners in Raipur. Bold outdoor advertising, from first sketch to final fitting.">
+
+  <!-- DEMO PROTECTION: keeps search engines away while the client reviews the site.
+       When the client approves: change the line below to
+       <meta name="robots" content="index, follow">
+       and also update robots.txt (instructions inside it). -->
+  <meta name="robots" content="noindex, nofollow">
+
+  <meta name="theme-color" content="#0a0810">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+
+  <!-- ==========================================================
+       SITE BASE URL: https://workwithpratul-collab.github.io/trinetra-v2/
+       Everything in this block uses the live address. If the site moves
+       (for example to a custom domain), update every URL in this block.
+       ========================================================== -->
+  <link rel="canonical" href="https://workwithpratul-collab.github.io/trinetra-v2/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Trinetra Creations">
+  <meta property="og:locale" content="en_IN">
+  <meta property="og:title" content="Trinetra Creations | Hoardings &amp; Flex Printing in Raipur">
+  <meta property="og:description" content="Design, print and installation of hoardings and flex banners in Raipur. From a blank sheet to your name above the city.">
+  <meta property="og:url" content="https://workwithpratul-collab.github.io/trinetra-v2/">
+  <meta property="og:image" content="https://workwithpratul-collab.github.io/trinetra-v2/assets/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A giant lit hoarding with the Trinetra logo above the city at night.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Trinetra Creations | Hoardings &amp; Flex Printing in Raipur">
+  <meta name="twitter:description" content="Design, print and installation of hoardings and flex banners in Raipur.">
+  <meta name="twitter:image" content="https://workwithpratul-collab.github.io/trinetra-v2/assets/og-image.jpg">
+  <meta name="twitter:image:alt" content="A giant lit hoarding with the Trinetra logo above the city at night.">
+  <!-- Business details for Google. City-level address only.
+       Add "telephone": "+91XXXXXXXXXX" (after "url") once the client gives a real number. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Trinetra Creations",
+    "description": "Design, printing and installation of hoardings and flex banners.",
+    "slogan": "Imagine · Believe · Achieve",
+    "url": "https://workwithpratul-collab.github.io/trinetra-v2/",
+    "logo": "https://workwithpratul-collab.github.io/trinetra-v2/assets/logo.png",
+    "image": "https://workwithpratul-collab.github.io/trinetra-v2/assets/og-image.jpg",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Raipur",
+      "addressRegion": "Chhattisgarh",
+      "addressCountry": "IN"
+    },
+    "areaServed": { "@type": "City", "name": "Raipur" }
+  }
+  </script>
+  <!-- ===================== end of base URL block ===================== -->
 
   <!-- Turn on "film mode" before anything paints.
        If JavaScript is off, or the visitor prefers reduced motion,
@@ -23,8 +80,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
 
-  <!-- The poster is the very first thing people see, so fetch it early -->
-  <link rel="preload" as="image" href="assets/poster.webp" fetchpriority="high">
+  <!-- The first picture is the first thing people see, so fetch it early:
+       the wide poster on landscape screens, the tall first frame on phones. -->
+  <link rel="preload" as="image" href="assets/poster.webp" fetchpriority="high" media="(min-aspect-ratio: 4/5)">
+  <link rel="preload" as="image" href="assets/frames/portrait/f0001.webp" fetchpriority="high" media="(max-aspect-ratio: 4/5)">
 
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -184,7 +243,7 @@
         </header>
       </div>
 
-      <ul class="work__track" aria-label="Sample projects. Swipe sideways to see more.">
+      <ul class="work__track" tabindex="0" aria-label="Sample projects. Swipe sideways to see more.">
         <li class="work__item reveal">
           <div class="work__media"><div class="ph" role="img" aria-label="Photo coming soon"><span class="ph__frame"></span><span class="ph__text">Photo coming soon</span></div></div>
           <h3 class="work__brand">Saanvi Jewellers</h3>
