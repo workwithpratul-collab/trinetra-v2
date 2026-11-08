@@ -17,8 +17,8 @@ This is a pitch demo for the client, hosted on **GitHub Pages**.
 ```
 index.html
 css/style.css
-js/film.js        (scroll film: canvas + frames + text cards)
-js/main.js        (everything else: Lenis, reveals, nav)
+js/film.js        (scroll film: canvas + frames + text cards + chapter ticks)
+js/main.js        (everything else: Lenis, reveals, nav, FAQ)
 assets/frames/desktop/f0001.webp  … f1189.webp   (1280×720, landscape screens)
 assets/frames/portrait/f0001.webp … f1189.webp   (405×720, tall phone frames, already cropped to follow the subject)
 assets/logo.png
@@ -34,29 +34,34 @@ assets/poster.webp   (copy of frame f0001, shown while frames load)
 - Desktop frames only: draw **zoomed in by about 4%** to crop off the small "Veo" watermark in the bottom-right corner. Portrait frames already have it removed.
 - **Loading:** show the poster immediately. Load frames progressively: first every 8th frame across the whole film (so scrolling works at once at lower smoothness), then fill in the rest. Always draw the nearest frame that has loaded. Never block the page waiting for all frames.
 - Use `requestAnimationFrame` and only redraw when the frame number changes.
-- `prefers-reduced-motion`: skip the film and show 4 still frames (f0040, f0700, f1000, f1160) as a simple stacked section with the same text.
+- `prefers-reduced-motion`: skip the film and show the scenes as a simple stacked section, one still frame per scene with the same text and positions (stills: f0040, f0185, f0330, f0480, f0700, f0800, f1000, f1040, f1160).
 
 ### Text cards timed to frames
-Text is real HTML on top of the canvas (never burned into the images). Each card is visible only between its frames.
+Text is real HTML on top of the canvas (never burned into the images). Each card is visible only between its frames. Cards never overlap.
+"Desktop" = desktop frames, "Phone" = portrait frames. *text* = the gradient phrase.
 
-| Text | In (frame) | Out (frame) | Placement |
-|---|---|---|---|
-| Label "Trinetra Creations · Raipur" + headline "Every hoarding starts / as a *blank sheet.*" | 1 | 120 | bottom-left |
-| "From our floor…" | 588 | 650 | centred (screen is black here) |
-| "*…to your skyline.*" (gradient) | 613 | 667 | centred, under the line above |
-| "Imagine." | 836 | 924 | centred, in a row, violet |
-| "Believe." | 861 | 924 | centred, in a row, magenta |
-| "Achieve." | 887 | 924 | centred, in a row, saffron |
-| Label "Imagine · Believe · Achieve" + headline "Your brand, / *seen by the whole city.*" + buttons | 1080 | 1189 (stays) | left third, vertically centred (hoarding is on the right) |
+| Frames | Label | Headline | Body | Desktop | Phone |
+|---|---|---|---|---|---|
+| 1–75 | Trinetra Creations · Raipur | Every hoarding starts as a *blank sheet.* | (none) | bottom-left | top |
+| 135–235 | 01 · Print | Printed in-house, *colour-true.* | Large-format machines in our own facility, so your brand colours stay exact from the first sheet to the last. | top-left | top |
+| 275–380 | 02 · Finish | Every edge, *reinforced.* | Hemmed borders and metal eyelets along every side keep the flex tight through wind and monsoon rain. | top-left | bottom |
+| 430–530 | 03 · Our crew | One team, *start to finish.* | The people who print your hoarding are the people who carry it out and put it up. | bottom-left | bottom |
+| 588–650 | (none) | From our floor… | (none) | centred | centred |
+| 613–667 | (none) | *…to your skyline.* | (none) | centred, under the line above | same |
+| 760–832 | 04 · Install | Installed safely, *at any height.* | Harnessed, helmeted installers mount and tension every banner on site. | top-left | top |
+| 836–924 | (none) | Imagine. / Believe. / Achieve. (appear at 836, 861, 887; violet, magenta, saffron) | (none) | centred, in a row | centred, stacked |
+| 935–1060 | 05 · Light | Seen *day and night.* | Floodlit and backlit options keep your message working long after sunset. | bottom-left | bottom |
+| 1080–1189 | Imagine · Believe · Achieve | Your brand, *seen by the whole city.* + buttons | (none) | left third, vertically centred | bottom |
 
+Safe margins: desktop 5.5vw from the edges; phones 20px at the sides, top cards start below the fixed header. Respect safe-area insets.
 The black moments (frames ~588–667 and ~836–924) are deliberate: the text must fill them so the viewer never notices a black screen.
-Text animation: each line rises out of a mask (`overflow: hidden` wrapper, inner span moves from `translateY(105%)` to `0`), about 1 s with an ease-out curve, 0.09 s stagger between lines. Fade labels and buttons in slightly after.
-Add a soft dark gradient behind text only where needed for readability (bottom gradient for the opening, left gradient for the finale).
-A thin progress line on the right edge shows how far through the film the visitor is. A "Scroll" cue at the start fades out once scrolling begins.
+Text animation is **scroll-linked** (it plays backward when you scroll back): each line rises out of a mask (`overflow: hidden` wrapper, inner span from `translateY(105%)` to `0`) over ~15 frames with an ease-out curve, 3 frames stagger between lines; label, body and buttons fade up a few frames later; each card fades out over its last ~12 frames. The opening card plays in by itself on page load.
+Soft dark gradient on the side where the text sits (top gradient for top cards, bottom for bottom cards, left for the finale), only as strong as needed for WCAG AA contrast. Very bright frames (the Print scene) get a deeper one (`scene--bright`).
+**Chapter indicator:** a thin progress line on the right edge with 5 ticks at the start frames of Print, Finish, Crew, Install, Light. On big screens the current chapter name shows beside the line in tiny Barlow Semi Condensed; on phones (and phones held sideways) just the line with ticks. A "Scroll" cue at the start fades out once scrolling begins.
 
 ## Mobile first (most visitors are on phones)
 Design and test **phone first (390×844)**, then scale up to tablet and desktop. The phone version must feel at least as premium as desktop, never like a squeezed desktop page.
-- **Film on phones:** text never covers the main subject. Opening and finale text sit at the **bottom** of the screen over a soft dark gradient; black-moment text is centred. Headlines around 10–12vw, labels at least 11px, body at least 16px.
+- **Film on phones:** text never covers the main subject. Text sits where the card table says (top or bottom) over a soft dark gradient; black-moment text is centred. Film headlines about 13vw, labels at least 11px, body at least 16px.
 - **Thumb-friendly:** every button and link at least 48px tall, main actions in the lower half of the screen.
 - **Sticky action bar on phones:** after the film ends, a slim bar fixed to the bottom with two buttons: **Call** and **WhatsApp** (brand gradient on the primary one). It respects the iPhone home-bar safe area (`env(safe-area-inset-bottom)`). Hide it during the film.
 - **Use `svh`/`dvh` units** for full-screen sections so the mobile browser's address bar doesn't cause jumps.
@@ -69,15 +74,17 @@ The client has not given real details yet, so the site uses realistic **sample c
 - Phone and WhatsApp: use the obvious dummy **+91 98XXX XXXXX**, and `https://wa.me/` with no number. Never a real-looking number.
 - Work photos: sample images of hoardings for **fictional brands only**, never real companies. Captions use generic areas of Raipur and plausible sizes.
 - No invented client names, years in business, project counts, ratings or awards.
-- Footer shows a small line in Geist Mono: "Demo website · sample content".
+- Footer shows a small label line: "Demo website · sample content".
 - Add `<meta name="robots" content="noindex, nofollow">` to every page and `Disallow: /` in robots.txt until the client approves the site. Leave a clear comment showing how to switch it to "index" later.
 
-## Typography (direction "C · Cinema")
-- **Headlines:** Instrument Serif (Google Fonts), regular. The one highlighted phrase per screen is *italic* with the brand gradient as text fill.
-- **Body, buttons, links:** Geist.
-- **Labels and specs:** Geist Mono, uppercase, letter-spacing ~0.08em, small.
-- Headline sizes scale with the screen (`clamp()`), large and calm; line-height about 0.95; `text-wrap: balance`.
-- Body text max ~34 characters per line inside the film, ~65 elsewhere.
+## Typography (direction "D · Highway")
+- **Headlines:** Big Shoulders Display (Google Fonts), weight 800, UPPERCASE, letter-spacing 0.005em, line-height 0.88, `text-wrap: balance`.
+- **Highlighted phrase** (one per screen): weight 900 with the brand gradient as text fill. Not italic.
+- **Body, buttons, links:** Barlow 400 (body) and 500 (buttons). Body line-height 1.55.
+- **Labels and specs:** Barlow Semi Condensed 600, uppercase, letter-spacing 0.18em, at least 11px.
+- Load from Google Fonts with `preconnect` and `display=swap`. No other fonts.
+- Sizes: film headlines `clamp(3rem, 7vw, 7.5rem)` on wide screens (also capped by screen height), about 13vw on phones; section headlines `clamp(2.6rem, 6vw, 6rem)`; body 17–18px on phones, 18–19px on desktop.
+- Body text max ~32 characters per line inside the film, ~60 elsewhere.
 - Only one gradient phrase per screen.
 
 ## Colours
@@ -100,10 +107,14 @@ Dark site only.
 - Visible keyboard focus everywhere.
 
 ## Sections after the film
-1. **What we do:** "Design. Print. *Install.*" with three columns (Design / Print / Install), each with one short line and a Geist Mono spec line with sample sizes and materials (e.g. "Up to 40 × 20 ft", "Star flex · Vinyl · Backlit").
-2. **Work:** a grid of 6 sample hoarding photos for fictional brands (assets/work/work-1.webp … work-6.webp), with short captions (area of Raipur and size).
-3. **Contact:** big headline, dummy phone and WhatsApp (see Demo content), "Raipur, Chhattisgarh", a "Plan your hoarding" button.
-4. **Footer:** Trinetra Creations, CEO Ashutosh Mishra, Raipur, year.
+Each of What we do, Work and Contact has a 1–2 sentence intro under the headline.
+1. **What we do:** "Design. Print. *Install.*" with three columns (Design / Print / Install), each with one short line and a spec label line with sample sizes and materials (e.g. "Up to 40 × 20 ft", "Star flex · Vinyl · Backlit").
+2. **How it works:** "Four steps to *your skyline.*", 4 steps (Brief, Design, Print, Install) with number, title and one line. Phones: vertical timeline with a thin gradient line joining the steps. Desktop: four columns.
+3. **Why Trinetra:** "Big, bright and *built to last.*", 4 points (title + one line).
+4. **FAQ:** "Before you *book.*", an accordion built with `<details>` (tap or keyboard, one open at a time).
+5. **Work:** a grid of 6 sample hoarding photos for fictional brands (assets/work/work-1.webp … work-6.webp), with short captions (area of Raipur and size).
+6. **Contact:** big headline, dummy phone and WhatsApp (see Demo content), "Raipur, Chhattisgarh", a "Plan your hoarding" button.
+7. **Footer:** Trinetra Creations, CEO Ashutosh Mishra, Raipur, year.
 
 ## Quality bar
 - Must feel smooth on a mid-range Android phone and an iPhone.

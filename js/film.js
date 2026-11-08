@@ -1,7 +1,8 @@
 /* =========================================================
    Trinetra v2 · film.js
    The scroll film: draws 1,189 frames on a <canvas> while you scroll,
-   and switches the timed text cards on and off.
+   moves the timed text cards with the scroll, and runs the chapter
+   indicator on the right edge.
    ========================================================= */
 (function () {
   'use strict';
@@ -30,7 +31,7 @@
   // Each frame normally gets the same amount of scroll. Some stretches get
   // MORE scroll ("weight") so text cards stay on screen longer.
   var DWELL = [
-    { from: 1,    to: 120,  weight: 1.4 },   // opening headline
+    { from: 1,    to: 75,   weight: 1.4 },   // opening headline
     { from: 588,  to: 667,  weight: 2.6 },   // black moment 1: "From our floor… to your skyline."
     { from: 836,  to: 924,  weight: 2.6 },   // black moment 2: Imagine. Believe. Achieve.
     { from: 1080, to: 1189, weight: 1.8 }    // finale: hoarding + call to action
@@ -42,7 +43,9 @@
   var canvas = film.querySelector('.film__canvas');
   var ctx = canvas.getContext('2d', { alpha: false });
   var timed = Array.prototype.slice.call(film.querySelectorAll('.timed'));
+  var progress = film.querySelector('.progress');
   var progressFill = film.querySelector('.progress__fill');
+  var chapterName = film.querySelector('.progress__name');
   var cue = film.querySelector('.cue');
 
   /* ---------- Scroll → frame map (with dwell weights) ---------- */
@@ -67,6 +70,15 @@
       if (cumulative[mid] <= target) lo = mid; else hi = mid - 1;
     }
     return lo;
+  }
+
+  // Same as above, but keeps the fraction and counts from 1 (e.g. 136.4).
+  // The text cards use this so they move smoothly *between* frames.
+  // i is the frame index frameFromProgress(p) already found.
+  function exactFrame(p, i) {
+    var target = p * cumulative[FRAME_COUNT];
+    var part = (target - cumulative[i]) / (cumulative[i + 1] - cumulative[i]);
+    return i + 1 + (part < 0 ? 0 : part > 1 ? 1 : part);
   }
 
   /* ---------- Frame sets (desktop / portrait) ---------- */
@@ -227,32 +239,119 @@
   }
   function currentFrame() { return frameFromProgress(currentProgress()); }
 
-  /* ---------- Text cards ---------- */
-  function updateCards(frameNumber) {          // frameNumber is 1-based
-    for (var k = 0; k < timed.length; k++) {
-      var el = timed[k];
-      var on = frameNumber >= el._in && frameNumber <= el._out;
-      if (on !== el._on) {
-        el._on = on;
-        el.classList.toggle('is-on', on);
-      }
-    }
+  /* ---------- Text cards (move with the scroll) ----------
+     Every element with class "timed" has data-in and data-out (frame numbers).
+     Its look is worked out from the exact frame, so the text moves with your
+     scroll and plays backward when you scroll back:
+       - its lines rise out of their masks over RISE frames, STAGGER frames apart
+       - labels, body text and buttons (.fade) follow FADE_DELAY frames later
+       - the whole card fades out over the last FADE_OUT frames before data-out
+     A card whose data-out is the last frame (the finale) never fades out. */
+  var RISE = 15, STAGGER = 3, FADE_DELAY = 6, FADE_IN = 8, FADE_OUT = 12;
+  // The opening card is on screen at frame 1, before any scrolling, so it
+  // plays in by itself when the page opens (INTRO_FPS frames per second).
+  var INTRO_FPS = 18, INTRO_FRAMES = 40;
+  var introStart = null;
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { introStart = performance.now(); });   // wait for the headline font
+  } else {
+    introStart = performance.now();
   }
+
   timed.forEach(function (el) {
     el._in = +el.dataset.in;
     el._out = +el.dataset.out;
+    el._stay = el._out >= FRAME_COUNT;
+    el._lines = el.querySelectorAll('.line > span');
+    el._fades = el.querySelectorAll('.fade');
     el._on = false;
   });
 
+  function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  function easeOut(x) { return 1 - Math.pow(1 - x, 3); }     // fast start, soft landing
+
+  // Only touch the page when a value really changed (keeps scrolling light)
+  function setStyle(node, prop, value) {
+    var key = '_' + prop;
+    if (node[key] !== value) { node[key] = value; node.style[prop] = value; }
+  }
+
+  function updateCards(f, intro) {      // f = exact frame (1-based, with fractions)
+    for (var k = 0; k < timed.length; k++) {
+      var el = timed[k];
+      var t = f - el._in;                       // frames since this card started
+      if (el._in === 1) t += intro;
+      var fadeOut = el._stay ? 1 : clamp01((el._out - f) / FADE_OUT);
+      var alpha = t < 0 ? 0 : Math.min(clamp01(t / FADE_IN), fadeOut);
+      var on = alpha > 0;
+      if (on !== el._on) {
+        el._on = on;
+        el.classList.toggle('is-on', on);     // CSS: visible + clickable
+      }
+      if (!on) continue;
+
+      setStyle(el, 'opacity', alpha.toFixed(3));
+      for (var j = 0; j < el._lines.length; j++) {
+        var x = easeOut(clamp01((t - j * STAGGER) / RISE));
+        setStyle(el._lines[j], 'transform', x === 1 ? 'none' : 'translateY(' + ((1 - x) * 105).toFixed(2) + '%)');
+      }
+      x = easeOut(clamp01((t - FADE_DELAY) / RISE));
+      for (j = 0; j < el._fades.length; j++) {
+        setStyle(el._fades[j], 'opacity', x.toFixed(3));
+        setStyle(el._fades[j], 'transform', x === 1 ? 'none' : 'translateY(' + ((1 - x) * 12).toFixed(1) + 'px)');
+      }
+    }
+  }
+
+  /* ---------- Chapter indicator ----------
+     Every scene with data-chapter gets a small tick on the progress line,
+     placed where that chapter starts. The current chapter's name shows
+     beside the line (big screens only, see CSS). */
+  var chapters = Array.prototype.slice.call(film.querySelectorAll('[data-chapter]')).map(function (el) {
+    var start = +el.dataset.in;
+    var tick = document.createElement('span');
+    tick.className = 'progress__tick';
+    // Same maths as the scroll map, so the tick lines up with the fill
+    tick.style.top = (cumulative[start - 1] / cumulative[FRAME_COUNT] * 100).toFixed(2) + '%';
+    progress.appendChild(tick);
+    return { start: start, end: +el.dataset.out, name: el.dataset.chapter, tick: tick, past: false };
+  });
+  var shownChapter = null;
+
+  function updateChapters(frameNumber) {      // frameNumber is 1-based
+    var current = null;
+    for (var i = 0; i < chapters.length; i++) {
+      var c = chapters[i];
+      var past = frameNumber >= c.start;
+      if (past !== c.past) { c.past = past; c.tick.classList.toggle('is-past', past); }
+      if (past) current = c;
+    }
+    // A chapter's name stays until the next one starts; the last one ends with its card
+    if (current && current === chapters[chapters.length - 1] && frameNumber > current.end) current = null;
+    if (current !== shownChapter) {
+      shownChapter = current;
+      if (current) {
+        chapterName.textContent = current.name;
+        chapterName.style.top = current.tick.style.top;
+      }
+      chapterName.classList.toggle('is-on', !!current);
+    }
+  }
+
   /* ---------- Main loop ---------- */
-  var lastFrame = -1, lastP = -1;
+  var lastFrame = -1, lastP = -1, lastIntro = -1;
 
   function tick() {
     var p = currentProgress();
     var frame = frameFromProgress(p);
+    var intro = introStart === null ? 0 : Math.min(INTRO_FRAMES, (performance.now() - introStart) / 1000 * INTRO_FPS);
 
+    if (p !== lastP || intro !== lastIntro) {
+      updateCards(exactFrame(p, frame), intro);
+      lastIntro = intro;
+    }
     if (frame !== lastFrame) {
-      updateCards(frame + 1);
+      updateChapters(frame + 1);
       lastFrame = frame;
     }
     if (p !== lastP) {

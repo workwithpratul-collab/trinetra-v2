@@ -75,10 +75,12 @@
     })();
   </script>
 
-  <!-- Fonts: Instrument Serif (headlines), Geist (body), Geist Mono (labels) -->
+  <!-- Fonts ("D · Highway"):
+       Big Shoulders Display 800/900 (headlines), Barlow 400/500 (body, buttons),
+       Barlow Semi Condensed 600 (labels and specs) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500&family=Barlow+Semi+Condensed:wght@600&family=Big+Shoulders+Display:wght@800;900&display=swap">
 
   <!-- The first picture is the first thing people see, so fetch it early:
        the wide poster on landscape screens, the tall first frame on phones. -->
@@ -108,31 +110,94 @@
     <section class="film" id="top" aria-label="Film: from a blank sheet to a city hoarding">
       <div class="film__stage">
         <canvas class="film__canvas" role="img"
-          aria-label="Short film: a blank white sheet is printed, carried out by the crew, fitted high above the city, and lit up at night as a giant Trinetra hoarding."></canvas>
+          aria-label="Short film: a blank white sheet is printed, finished with eyelets, carried out by the crew, fitted high above the city, and lit up at night as a giant Trinetra hoarding."></canvas>
 
-        <!-- Everything the visitor reads sits in .film__ui (exactly one small-screen tall) -->
+        <!-- Everything the visitor reads sits in .film__ui (exactly one small-screen tall).
+
+             HOW A SCENE WORKS
+             .scene          one text moment of the film, as big as the screen
+             .timed          shown only between data-in and data-out (film frame numbers).
+                             film.js fades it in and out and makes its lines rise.
+             at-phone-top / at-phone-bottom
+                             where the text sits on tall screens (portrait frames)
+             at-desk-top / at-desk-bottom / at-desk-middle
+                             where the text sits on wide screens (desktop frames)
+             data-chapter    this scene is a chapter: it gets a tick on the progress line
+             .still          a still photo, only shown (and downloaded) when the film
+                             is off: reduced motion or no JavaScript
+             .scrim          soft dark gradient on the text side, for readability -->
         <div class="film__ui">
 
-          <!-- Scene 1: opening (frames 1–120) -->
-          <!-- Each scene has a still photo. It is only shown (and only downloaded)
-               when the film is off: reduced motion or no JavaScript. -->
-          <div class="scene scene--open">
+          <!-- Opening (frames 1–75) -->
+          <div class="scene timed at-phone-top at-desk-bottom" data-in="1" data-out="75">
             <picture class="still">
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0040.webp" width="405" height="720">
               <img src="assets/frames/desktop/f0040.webp" width="1280" height="720" loading="lazy" alt="A blank white sheet floats above a large-format printer in the Trinetra workshop.">
             </picture>
-            <div class="scrim scrim--bottom timed" data-in="1" data-out="120"></div>
-            <div class="card card--open timed" data-in="1" data-out="120">
+            <div class="scrim"></div>
+            <div class="card">
               <p class="label fade">Trinetra Creations · Raipur</p>
               <h1 class="display">
-                <span class="line" style="--i:0"><span>Every hoarding</span></span>
-                <span class="line" style="--i:1"><span>starts as a</span></span>
-                <span class="line" style="--i:2"><span><em class="grad">blank sheet.</em></span></span>
+                <span class="line"><span>Every hoarding</span></span>
+                <span class="line"><span>starts as a</span></span>
+                <span class="line"><span><em class="grad">blank sheet.</em></span></span>
               </h1>
             </div>
           </div>
 
-          <!-- Scene 2: first black moment (frames 588–667) -->
+          <!-- 01 · Print (frames 135–235) -->
+          <!-- scene--bright: white flex fills the frame here, so a deeper gradient on wide screens -->
+          <div class="scene scene--bright timed at-phone-top at-desk-top" data-in="135" data-out="235" data-chapter="Print">
+            <picture class="still">
+              <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0185.webp" width="405" height="720">
+              <img src="assets/frames/desktop/f0185.webp" width="1280" height="720" loading="lazy" alt="A large-format printer prints a violet and orange design onto white flex.">
+            </picture>
+            <div class="scrim"></div>
+            <div class="card">
+              <p class="label fade">01 · Print</p>
+              <h2 class="display">
+                <span class="line"><span>Printed in-house,</span></span>
+                <span class="line"><span><em class="grad">colour-true.</em></span></span>
+              </h2>
+              <p class="card__body fade">Large-format machines in our own facility, so your brand colours stay exact from the first sheet to the last.</p>
+            </div>
+          </div>
+
+          <!-- 02 · Finish (frames 275–380) -->
+          <div class="scene timed at-phone-bottom at-desk-top" data-in="275" data-out="380" data-chapter="Finish">
+            <picture class="still">
+              <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0330.webp" width="405" height="720">
+              <img src="assets/frames/desktop/f0330.webp" width="1280" height="720" loading="lazy" alt="Gloved hands press metal eyelets into the edge of the printed flex.">
+            </picture>
+            <div class="scrim"></div>
+            <div class="card">
+              <p class="label fade">02 · Finish</p>
+              <h2 class="display">
+                <span class="line"><span>Every edge,</span></span>
+                <span class="line"><span><em class="grad">reinforced.</em></span></span>
+              </h2>
+              <p class="card__body fade">Hemmed borders and metal eyelets along every side keep the flex tight through wind and monsoon rain.</p>
+            </div>
+          </div>
+
+          <!-- 03 · Our crew (frames 430–530) -->
+          <div class="scene timed at-phone-bottom at-desk-bottom" data-in="430" data-out="530" data-chapter="Crew">
+            <picture class="still">
+              <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0480.webp" width="405" height="720">
+              <img src="assets/frames/desktop/f0480.webp" width="1280" height="720" loading="lazy" alt="Three crew members carry the rolled hoarding out of the workshop.">
+            </picture>
+            <div class="scrim"></div>
+            <div class="card">
+              <p class="label fade">03 · Our crew</p>
+              <h2 class="display">
+                <span class="line"><span>One team,</span></span>
+                <span class="line"><span><em class="grad">start to finish.</em></span></span>
+              </h2>
+              <p class="card__body fade">The people who print your hoarding are the people who carry it out and put it up.</p>
+            </div>
+          </div>
+
+          <!-- First black moment (frames 588–667) -->
           <div class="scene scene--center">
             <picture class="still still--dim">
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0700.webp" width="405" height="720">
@@ -140,20 +205,39 @@
             </picture>
             <div class="stack">
               <p class="display display--center timed" data-in="588" data-out="650">
-                <span class="line" style="--i:0"><span>From our floor…</span></span>
+                <span class="line"><span>From our floor…</span></span>
               </p>
               <p class="display display--center timed" data-in="613" data-out="667">
-                <span class="line" style="--i:0"><span><em class="grad">…to your skyline.</em></span></span>
+                <span class="line"><span><em class="grad">…to your skyline.</em></span></span>
               </p>
             </div>
           </div>
 
-          <!-- Scene 3: second black moment (frames 836–924) -->
+          <!-- 04 · Install (frames 760–832) -->
+          <div class="scene timed at-phone-top at-desk-top" data-in="760" data-out="832" data-chapter="Install">
+            <picture class="still">
+              <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0800.webp" width="405" height="720">
+              <img src="assets/frames/desktop/f0800.webp" width="1280" height="720" loading="lazy" alt="Installers in harnesses and helmets fix the banner high above the city at dusk.">
+            </picture>
+            <div class="scrim"></div>
+            <div class="card">
+              <p class="label fade">04 · Install</p>
+              <h2 class="display">
+                <span class="line"><span>Installed safely,</span></span>
+                <span class="line"><span><em class="grad">at any height.</em></span></span>
+              </h2>
+              <p class="card__body fade">Harnessed, helmeted installers mount and tension every banner on site.</p>
+            </div>
+          </div>
+
+          <!-- Second black moment (frames 836–924) -->
           <div class="scene scene--center scene--trio">
             <picture class="still still--dim">
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f1000.webp" width="405" height="720">
               <img src="assets/frames/desktop/f1000.webp" width="1280" height="720" loading="lazy" alt="The finished hoarding lights up above the city at night.">
             </picture>
+            <!-- soft dark glow behind the words: the lit city fades in near the end -->
+            <div class="scrim scrim--glow timed" data-in="836" data-out="924"></div>
             <p class="trio">
               <span class="trio__word timed" data-in="836" data-out="924"><span class="line"><span class="c-violet">Imagine.</span></span></span>
               <span class="trio__word timed" data-in="861" data-out="924"><span class="line"><span class="c-magenta">Believe.</span></span></span>
@@ -161,19 +245,36 @@
             </p>
           </div>
 
-          <!-- Scene 4: finale (frame 1080 to the end, stays) -->
-          <div class="scene scene--finale">
+          <!-- 05 · Light (frames 935–1060) -->
+          <div class="scene timed at-phone-bottom at-desk-bottom" data-in="935" data-out="1060" data-chapter="Light">
+            <picture class="still">
+              <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f1040.webp" width="405" height="720">
+              <img src="assets/frames/desktop/f1040.webp" width="1280" height="720" loading="lazy" alt="Floodlights shine on the Trinetra hoarding above a busy road at night.">
+            </picture>
+            <div class="scrim"></div>
+            <div class="card">
+              <p class="label fade">05 · Light</p>
+              <h2 class="display">
+                <span class="line"><span>Seen</span></span>
+                <span class="line"><span><em class="grad">day and night.</em></span></span>
+              </h2>
+              <p class="card__body fade">Floodlit and backlit options keep your message working long after sunset.</p>
+            </div>
+          </div>
+
+          <!-- Finale (frame 1080 to the end, stays) -->
+          <div class="scene timed at-phone-bottom at-desk-middle" data-in="1080" data-out="1189">
             <picture class="still">
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f1160.webp" width="405" height="720">
               <img src="assets/frames/desktop/f1160.webp" width="1280" height="720" loading="lazy" alt="A giant lit hoarding showing the Trinetra logo stands over a busy road at night.">
             </picture>
-            <div class="scrim scrim--finale timed" data-in="1080" data-out="1189"></div>
-            <div class="card card--finale timed" data-in="1080" data-out="1189">
+            <div class="scrim"></div>
+            <div class="card card--finale">
               <p class="label fade">Imagine · Believe · Achieve</p>
               <h2 class="display">
-                <span class="line" style="--i:0"><span>Your brand,</span></span>
-                <span class="line" style="--i:1"><span><em class="grad">seen by the</em></span></span>
-                <span class="line" style="--i:2"><span><em class="grad">whole city.</em></span></span>
+                <span class="line"><span>Your brand,</span></span>
+                <span class="line"><span><em class="grad">seen by the</em></span></span>
+                <span class="line"><span><em class="grad">whole city.</em></span></span>
               </h2>
               <div class="actions fade">
                 <a class="btn btn--primary" href="#contact"><span>Plan your hoarding</span></a>
@@ -182,8 +283,13 @@
             </div>
           </div>
 
-          <!-- Thin progress line (right edge) and the "Scroll" cue -->
-          <div class="progress" aria-hidden="true"><span class="progress__fill"></span></div>
+          <!-- Chapter indicator on the right edge: a thin line that fills as you
+               scroll. film.js adds one tick per chapter; on big screens the
+               current chapter's name shows beside the line. -->
+          <div class="progress" aria-hidden="true">
+            <span class="progress__fill"></span>
+            <span class="progress__name"></span>
+          </div>
           <div class="cue" aria-hidden="true"><span class="cue__text">Scroll</span><span class="cue__line"></span></div>
         </div>
       </div>
@@ -198,7 +304,7 @@
             <span class="line" style="--i:0"><span>Design. Print.</span></span>
             <span class="line" style="--i:1"><span><em class="grad">Install.</em></span></span>
           </h2>
-          <p class="section__lead">One team handles your hoarding, from the first sketch to the final fitting.</p>
+          <p class="section__lead">One team takes your hoarding from first sketch to final fitting. You brief us once, and we handle every step in between.</p>
         </header>
 
         <ol class="services__list">
@@ -224,6 +330,115 @@
       </div>
     </section>
 
+    <!-- ============ HOW IT WORKS ============
+         Phones: a vertical timeline (a thin gradient line joins the numbers).
+         Big screens: four columns, the line runs across. -->
+    <section class="section steps" id="how" aria-labelledby="how-title">
+      <div class="wrap">
+        <header class="section__head reveal">
+          <p class="label label--mute">How it works</p>
+          <h2 class="display section__title" id="how-title">
+            <span class="line" style="--i:0"><span>Four steps to</span></span>
+            <span class="line" style="--i:1"><span><em class="grad">your skyline.</em></span></span>
+          </h2>
+        </header>
+
+        <ol class="steps__list">
+          <li class="step reveal">
+            <p class="step__num" aria-hidden="true">01</p>
+            <h3 class="step__title">Brief</h3>
+            <p class="step__text">Tell us where, what size and when. A call or a WhatsApp message is enough.</p>
+          </li>
+          <li class="step reveal">
+            <p class="step__num" aria-hidden="true">02</p>
+            <h3 class="step__title">Design</h3>
+            <p class="step__text">We create or adapt your artwork for viewing distance, and you approve it before anything is printed.</p>
+          </li>
+          <li class="step reveal">
+            <p class="step__num" aria-hidden="true">03</p>
+            <h3 class="step__title">Print</h3>
+            <p class="step__text">Your hoarding is printed on our large-format machines, checked and finished with eyelets.</p>
+          </li>
+          <li class="step reveal">
+            <p class="step__num" aria-hidden="true">04</p>
+            <h3 class="step__title">Install</h3>
+            <p class="step__text">Our crew mounts it on site and sends you photos of the finished hoarding.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ WHY TRINETRA ============ -->
+    <section class="section why" id="why" aria-labelledby="why-title">
+      <div class="wrap">
+        <header class="section__head reveal">
+          <p class="label label--mute">Why Trinetra</p>
+          <h2 class="display section__title" id="why-title">
+            <span class="line" style="--i:0"><span>Big, bright and</span></span>
+            <span class="line" style="--i:1"><span><em class="grad">built to last.</em></span></span>
+          </h2>
+        </header>
+
+        <ul class="why__list">
+          <li class="why__item reveal">
+            <h3 class="why__title">Sharp at any size</h3>
+            <p class="why__text">Artwork prepared for the distance people actually see it from.</p>
+          </li>
+          <li class="why__item reveal">
+            <h3 class="why__title">Materials for the weather</h3>
+            <p class="why__text">Flex, vinyl and backlit options chosen for Raipur's sun and rain.</p>
+          </li>
+          <li class="why__item reveal">
+            <h3 class="why__title">One point of contact</h3>
+            <p class="why__text">One person handles your hoarding from design to installation.</p>
+          </li>
+          <li class="why__item reveal">
+            <h3 class="why__title">Clear quotes</h3>
+            <p class="why__text">Size, material and installation priced up front.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============
+         Built with <details>/<summary>: tap or press Enter/Space to open.
+         name="faq" makes it "one open at a time" in modern browsers;
+         main.js does the same for older ones. -->
+    <section class="section faq" id="faq" aria-labelledby="faq-title">
+      <div class="wrap faq__grid">
+        <header class="section__head reveal">
+          <p class="label label--mute">Questions</p>
+          <h2 class="display section__title" id="faq-title">
+            <span class="line" style="--i:0"><span>Before you</span></span>
+            <span class="line" style="--i:1"><span><em class="grad">book.</em></span></span>
+          </h2>
+        </header>
+
+        <div class="faq__list reveal">
+          <details class="faq__item" name="faq">
+            <summary class="faq__q"><span>What sizes can you make?</span><span class="faq__icon" aria-hidden="true"></span></summary>
+            <div class="faq__a"><p>Anything from shop-front banners to large highway hoardings. Tell us the space and we'll suggest the right size.</p></div>
+          </details>
+          <details class="faq__item" name="faq">
+            <summary class="faq__q"><span>Can you design the artwork too?</span><span class="faq__icon" aria-hidden="true"></span></summary>
+            <div class="faq__a"><p>Yes. We can design from scratch or adapt your existing artwork for large format.</p></div>
+          </details>
+          <details class="faq__item" name="faq">
+            <summary class="faq__q"><span>How long does it take?</span><span class="faq__icon" aria-hidden="true"></span></summary>
+            <div class="faq__a"><p>It depends on size and design approval. Most jobs move quickly once the artwork is final, and we'll give you a date with your quote.</p></div>
+          </details>
+          <details class="faq__item" name="faq">
+            <summary class="faq__q"><span>Which material should I choose?</span><span class="faq__icon" aria-hidden="true"></span></summary>
+            <div class="faq__a"><p>Flex for most outdoor hoardings, vinyl for vehicles and smooth surfaces, backlit for visibility at night.</p></div>
+          </details>
+          <details class="faq__item" name="faq">
+            <summary class="faq__q"><span>Do you install outside Raipur?</span><span class="faq__icon" aria-hidden="true"></span></summary>
+            <div class="faq__a"><p>Tell us the location and we'll confirm.</p></div>
+          </details>
+        </div>
+      </div>
+    </section>
+
     <!-- ============ WORK ============
          Sample projects for fictional brands (demo content).
          To add a real photo: put it in assets/work/ as work-1.webp (etc.) and
@@ -236,8 +451,9 @@
             <p class="label label--mute">Work · sample projects</p>
             <h2 class="display section__title" id="work-title">
               <span class="line" style="--i:0"><span>Up around</span></span>
-              <span class="line" style="--i:1"><span>Raipur</span></span>
+              <span class="line" style="--i:1"><span><em class="grad">Raipur.</em></span></span>
             </h2>
+            <p class="section__lead">Sample hoardings for local brands, each sized for a real kind of spot around the city. Picture your own name in their place.</p>
           </div>
           <p class="work__count label" aria-hidden="true"><span class="work__current">1</span> / <span class="work__total">6</span></p>
         </header>
@@ -290,7 +506,7 @@
             <span class="line" style="--i:1"><span>your name</span></span>
             <span class="line" style="--i:2"><span><em class="grad">up there.</em></span></span>
           </h2>
-          <p class="section__lead">Tell us the spot and the size. We'll handle design, print and fitting.</p>
+          <p class="section__lead">Tell us the spot, the size and when you need it. We'll come back with a design plan and a clear quote.</p>
         </header>
 
         <div class="contact__side reveal">

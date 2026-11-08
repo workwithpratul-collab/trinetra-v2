@@ -1,7 +1,7 @@
 /* =========================================================
    Trinetra v2 · main.js
    Everything except the film: smooth scrolling (Lenis),
-   anchor links, header state, scroll reveals.
+   anchor links, header state, scroll reveals, work carousel, FAQ.
    ========================================================= */
 (function () {
   'use strict';
@@ -156,7 +156,20 @@
     }, { passive: true });
   }
 
-  /* ---------- 7. Footer year ---------- */
+  /* ---------- 7. FAQ: one answer open at a time ----------
+     Modern browsers already do this because every <details> has name="faq".
+     This covers older browsers: opening one closes the others. */
+  var faqs = document.querySelectorAll('.faq__item');
+  Array.prototype.forEach.call(faqs, function (item) {
+    item.addEventListener('toggle', function () {
+      if (!item.open) return;
+      Array.prototype.forEach.call(faqs, function (other) {
+        if (other !== item && other.open) other.open = false;
+      });
+    });
+  });
+
+  /* ---------- 8. Footer year ---------- */
   var year = document.querySelector('.year');
   if (year) year.textContent = new Date().getFullYear();
 })();

@@ -1,7 +1,7 @@
 # Trinetra v2
 
 A one-page website for **Trinetra Creations**, a hoarding and flex-printing company in Raipur.
-As you scroll, a short film plays: a blank sheet is printed, carried out, installed and lit up as a giant city hoarding. After the film come short sections (What we do, Work, Contact).
+As you scroll, a short film plays: a blank sheet is printed, carried out, installed and lit up as a giant city hoarding. After the film come short sections (What we do, How it works, Why Trinetra, FAQ, Work, Contact).
 
 This is a **demo for the client** with sample content (dummy phone number, sample projects). Search engines are blocked until the client approves (see `robots.txt`).
 

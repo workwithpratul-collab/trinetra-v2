@@ -6,8 +6,8 @@
    Contents
    1. Design tokens      5. Header
    2. Reset              6. The film (static layout, then film mode)
-   3. Type               7. Bigger screens
-   4. Buttons and links
+   3. Type               7. Sections after the film
+   4. Buttons and links  8. Bigger screens
    ========================================================= */
 
 /* ---------- 1. Design tokens (colours, fonts, timing) ---------- */
@@ -21,15 +21,19 @@
   --magenta: #e8399a;
   --saffron: #ff8a3d;
   --grad: linear-gradient(90deg, var(--violet), var(--magenta) 52%, var(--saffron));
+  --shade: 5, 4, 9;     /* the dark used in gradients behind text: rgba(var(--shade), .8) */
 
-  --serif: "Instrument Serif", "Times New Roman", serif;
-  --sans:  "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono:  "Geist Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  /* Typography "D · Highway" */
+  --font-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;  /* headlines */
+  --font-body:    "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;   /* body, buttons, links */
+  --font-label:   "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif; /* labels, specs */
 
   --ease-out: cubic-bezier(.16, 1, .3, 1);   /* fast start, soft landing */
 
   --gutter: 20px;                              /* side padding on phones */
   --safe-b: env(safe-area-inset-bottom, 0px); /* iPhone home-bar space */
+  --safe-l: env(safe-area-inset-left, 0px);   /* notch, when the phone is sideways */
+  --safe-r: env(safe-area-inset-right, 0px);
   --header-h: 64px;
 }
 
@@ -44,9 +48,10 @@ body {
   margin: 0;
   background: var(--night);
   color: var(--ink);
-  font-family: var(--sans);
+  font-family: var(--font-body);
   font-size: 17px;
-  line-height: 1.5;
+  font-weight: 400;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overflow-x: clip;               /* never any sideways scrolling */
@@ -78,36 +83,36 @@ a { color: inherit; }
 .skip:focus-visible { transform: none; }
 
 /* ---------- 3. Type styles ---------- */
-/* Label: small mono capitals, used above headlines and for specs */
+/* Label: small condensed capitals, used above headlines and for specs */
 .label {
-  font-family: var(--mono);
+  font-family: var(--font-label);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.4;
-  letter-spacing: .08em;
+  letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--ink);
-  opacity: .8;
 }
 
-/* Display: the big serif headline */
+/* Display: the big headline. Tall, condensed capitals, set tight. */
 .display {
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: 12vw;
-  line-height: .95;
-  letter-spacing: -.01em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: min(13vw, 4.75rem);  /* 13vw on phones; stops growing on tall tablets */
+  line-height: .88;
+  letter-spacing: .005em;
+  text-transform: uppercase;
   text-wrap: balance;
 }
 
-/* The ONE highlighted phrase per screen: italic + brand gradient */
+/* The ONE highlighted phrase per screen: heavier weight + brand gradient */
 .grad {
-  font-style: italic;
+  font-style: normal;
+  font-weight: 900;
   background: var(--grad);
   -webkit-background-clip: text;
           background-clip: text;
   color: transparent;
-  padding-right: .08em;           /* room for the italic overhang */
   -webkit-box-decoration-break: clone;
           box-decoration-break: clone;
 }
@@ -116,12 +121,12 @@ a { color: inherit; }
 .c-saffron { color: var(--saffron); }
 
 /* Line mask: .line is a window with overflow hidden; the span inside
-   can rise into it (see film mode below). */
+   can rise into it (film.js in the film, scroll reveals below it). */
 .line {
   display: block;
   overflow: hidden;
-  padding: .04em .1em .14em 0;    /* room for italic tails and descenders */
-  margin: -.04em -.1em -.14em 0;
+  padding: .08em .04em .08em 0;   /* a little room so letters are never clipped */
+  margin: -.08em -.04em -.08em 0;
 }
 .line > span { display: block; }
 
@@ -136,7 +141,7 @@ a { color: inherit; }
   min-height: 52px;
   padding: 0 26px;
   border-radius: 999px;
-  font: 500 16px/1 var(--sans);
+  font: 500 17px/1 var(--font-body);
   text-decoration: none;
   overflow: hidden;
   isolation: isolate;
@@ -199,16 +204,18 @@ a { color: inherit; }
 .header__brand { gap: 8px; }
 .header__brand img { width: auto; height: 28px; }
 .header__brand span {
-  font-family: var(--serif);
+  font-family: var(--font-display);
+  font-weight: 800;
   font-size: 24px;
   line-height: 1;
-  letter-spacing: .01em;
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 .header__link {
-  font-family: var(--mono);
+  font-family: var(--font-label);
   font-size: 12px;
-  font-weight: 500;
-  letter-spacing: .08em;
+  font-weight: 600;
+  letter-spacing: .18em;
   text-transform: uppercase;
   background-position: 12px calc(50% + 10px);
   background-size: 0 1px;
@@ -225,7 +232,7 @@ a { color: inherit; }
   position: absolute;
   inset: 0 0 -24px 0;
   z-index: -1;
-  background: linear-gradient(to bottom, rgba(5, 4, 9, .55), rgba(5, 4, 9, 0));
+  background: linear-gradient(to bottom, rgba(var(--shade), .55), rgba(var(--shade), 0));
   pointer-events: none;
   transition: opacity .5s ease;
 }
@@ -241,8 +248,11 @@ a { color: inherit; }
 
 /* =========================================================
    6. THE FILM
-   6a. Static layout (reduced motion, or no JavaScript):
-       four stacked scenes, each a still photo with its text.
+   6a. Scenes. The SAME layout is used twice:
+       - film off (reduced motion / no JavaScript): scenes stack, one per
+         screen, each with a still photo behind its text;
+       - film on: every scene lies on top of the canvas (see 6b).
+       Text position comes from the at-phone-* / at-desk-* classes.
    ========================================================= */
 .film { position: relative; background: #000; }
 .film__canvas, .progress, .cue { display: none; }
@@ -255,24 +265,46 @@ a { color: inherit; }
   flex-direction: column;
   justify-content: flex-end;
   overflow: hidden;
-  padding: calc(var(--header-h) + 24px) var(--gutter) calc(var(--safe-b) + 40px);
+  /* Phones: top cards start below the fixed header, 20px at the sides */
+  padding:
+    calc(var(--header-h) + 8px)
+    max(var(--gutter), var(--safe-r))
+    calc(var(--safe-b) + 28px)
+    max(var(--gutter), var(--safe-l));
 }
+.at-phone-top    { justify-content: flex-start; }
+.at-phone-bottom { justify-content: flex-end; }
+
 .still { position: absolute; inset: 0; }
 .still img { width: 100%; height: 100%; object-fit: cover; }
-.still--dim::after { content: ""; position: absolute; inset: 0; background: rgba(5, 4, 9, .55); }
+.still--dim::after { content: ""; position: absolute; inset: 0; background: rgba(var(--shade), .55); }
 
+/* Soft dark gradient on the side where the text sits.
+   Only as strong as needed for readable (WCAG AA) text. */
 .scrim { position: absolute; inset: 0; pointer-events: none; }
-.scrim--bottom,
-.scrim--finale {
+.at-phone-top .scrim {
+  background: linear-gradient(to bottom,
+    rgba(var(--shade), .88) 0%, rgba(var(--shade), .8) 30%, rgba(var(--shade), .45) 46%, rgba(var(--shade), 0) 64%);
+}
+.at-phone-bottom .scrim {
   background: linear-gradient(to top,
-    rgba(5, 4, 9, .92) 0%, rgba(5, 4, 9, .72) 26%, rgba(5, 4, 9, .25) 48%, rgba(5, 4, 9, 0) 62%);
+    rgba(var(--shade), .86) 0%, rgba(var(--shade), .7) 32%, rgba(var(--shade), .28) 50%, rgba(var(--shade), 0) 64%);
 }
 
 .card { position: relative; }
 .card .label { margin-bottom: 14px; }
+.card__body {
+  margin-top: 18px;
+  max-width: 30ch;                /* about 32 characters per line */
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink);
+  text-wrap: pretty;              /* avoids a single word alone on the last line */
+}
 .card--finale .actions { margin-top: 24px; }
 .card--finale .btn { flex: 1 1 auto; }
 
+/* The two black moments: text centred */
 .scene--center {
   justify-content: center;
   align-items: center;
@@ -282,20 +314,29 @@ a { color: inherit; }
 .scene--trio { justify-content: flex-end; padding-bottom: calc(var(--safe-b) + 56px); }
 .film-on .scene--trio { justify-content: center; }
 .scene--trio .still--dim::after {
-  background: linear-gradient(to top, rgba(5, 4, 9, .9), rgba(5, 4, 9, .3) 50%, rgba(5, 4, 9, 0) 75%);
+  background: linear-gradient(to top, rgba(var(--shade), .9), rgba(var(--shade), .3) 50%, rgba(var(--shade), 0) 75%);
 }
 
-.stack { position: relative; display: grid; gap: .1em; }
-.display--center { font-size: 11vw; }
+.scrim--glow {
+  background: radial-gradient(closest-side, rgba(var(--shade), .9), rgba(var(--shade), .72) 55%, rgba(var(--shade), 0));
+}
+.scrim--glow { display: none; }                         /* film only */
+.film-on .scrim--glow { display: block; inset: 10% -10%; }
+@media (min-aspect-ratio: 4/5) { .film-on .scrim--glow { inset: 15% 5%; } }
+
+.stack { position: relative; display: grid; gap: .12em; }
 
 .trio {
   position: relative;
   display: flex;
   flex-direction: column;         /* stacked on phones */
   align-items: center;
-  font-family: var(--serif);
-  font-size: 12vw;
-  line-height: .95;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: min(17vw, 6.5rem);
+  line-height: .88;
+  letter-spacing: .005em;
+  text-transform: uppercase;
 }
 .trio__word { display: block; }
 
@@ -330,64 +371,30 @@ a { color: inherit; }
 }
 .film-on .still { display: none; }      /* hidden = never downloaded (lazy) */
 
+/* Every scene lies over the whole screen; its padding and position
+   classes (6a) put the text in the right place. */
 .film-on .scene {
   position: absolute;
   inset: 0;
   min-height: 0;
-  padding: 0;
   pointer-events: none;
 }
-.film-on .card {
-  position: absolute;
-  left: var(--gutter);
-  right: var(--gutter);
-  bottom: calc(var(--safe-b) + 28px);
-}
-.film-on .card--open { bottom: calc(var(--safe-b) + 92px); }   /* room for the Scroll cue */
-.film-on .scene--center { padding: 0 var(--gutter); }
 
-/* Timed elements are hidden until film.js switches them on */
-.film-on .timed {
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .5s ease, visibility 0s linear .6s;
-}
-.film-on .timed.is-on {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity .6s ease, visibility 0s;
-}
-.film-on .card.is-on { pointer-events: auto; }
+/* Timed elements are hidden until film.js switches them on ("is-on").
+   film.js then sets their opacity and moves the lines frame by frame. */
+.film-on .timed { opacity: 0; visibility: hidden; }
+.film-on .timed.is-on { visibility: visible; }
+.film-on .timed.is-on .card { pointer-events: auto; }
+.film-on .timed .line > span { transform: translateY(105%); }
+.film-on .timed .fade { opacity: 0; }
 
-/* Lines rise out of their masks: ~1s, ease-out, 0.09s stagger */
-.film-on .timed .line > span {
-  transform: translateY(105%);
-  transition: transform .45s ease-in;
-}
-.film-on .timed.is-on .line > span {
-  transform: none;
-  transition: transform 1s var(--ease-out) calc(var(--i, 0) * .09s);
-}
-/* Labels and buttons fade in slightly after the lines */
-.film-on .timed .fade {
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity .3s ease, transform .3s ease;
-}
-.film-on .timed.is-on .fade {
-  opacity: .8;
-  transform: none;
-  transition: opacity .8s ease .35s, transform 1s var(--ease-out) .35s;
-}
-.film-on .timed.is-on .actions.fade { opacity: 1; transition-delay: .5s; }
-
-/* Progress line on the right edge */
+/* Chapter indicator: thin line on the right edge with one tick per chapter */
 .film-on .progress {
   display: block;
   position: absolute;
   top: 0; right: 0; bottom: 0;
   width: 2px;
-  background: rgba(243, 238, 246, .1);
+  background: rgba(243, 238, 246, .12);
 }
 .progress__fill {
   position: absolute;
@@ -396,6 +403,17 @@ a { color: inherit; }
   transform: scaleY(0);
   transform-origin: top;
 }
+.progress__tick {                  /* added by film.js */
+  position: absolute;
+  right: 0;
+  width: 8px;
+  height: 2px;
+  margin-top: -1px;
+  background: rgba(243, 238, 246, .4);
+  transition: background-color .4s ease;
+}
+.progress__tick.is-past { background: var(--ink); }
+.progress__name { display: none; }   /* shown on big screens only (section 8) */
 
 /* "Scroll" cue */
 .film-on .cue {
@@ -410,9 +428,10 @@ a { color: inherit; }
   transition: opacity .6s ease;
 }
 .cue__text {
-  font-family: var(--mono);
+  font-family: var(--font-label);
   font-size: 11px;
-  letter-spacing: .16em;
+  font-weight: 600;
+  letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--mute);
 }
@@ -438,7 +457,7 @@ a { color: inherit; }
 .cue.is-hidden { opacity: 0; }
 
 /* =========================================================
-   6c. SECTIONS AFTER THE FILM
+   7. SECTIONS AFTER THE FILM
    ========================================================= */
 .wrap {
   width: 100%;
@@ -453,16 +472,33 @@ a { color: inherit; }
 }
 .section + .section { border-top: 1px solid var(--line); }
 
-.section__head { max-width: 760px; }
+.section__head { max-width: 900px; }
 .section__head .label { margin-bottom: 18px; }
-.section__title { margin-bottom: 22px; }
+.section__title {
+  font-size: clamp(2.6rem, 6vw, 6rem);
+  margin-bottom: 22px;
+}
+.section__head .section__title:last-child { margin-bottom: 0; }
 .section__lead {
-  max-width: 34ch;
+  max-width: 54ch;                /* about 60 characters per line */
   color: var(--mute);
   font-size: 18px;
-  line-height: 1.5;
+  line-height: 1.55;
 }
-.label--mute { color: var(--mute); opacity: 1; }
+.label--mute { color: var(--mute); }
+
+/* Small headings inside sections (service, step, point): condensed capitals */
+.service__title,
+.step__title,
+.why__title,
+.work__brand,
+.footer__name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: .95;
+  letter-spacing: .01em;
+  text-transform: uppercase;
+}
 
 /* ----- What we do ----- */
 .services__list {
@@ -479,14 +515,131 @@ a { color: inherit; }
   gap: 10px;
 }
 .service__num { margin-bottom: 4px; }
-.service__title {
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: 40px;
-  line-height: 1;
-}
+.service__title { font-size: 44px; }
 .service__text { max-width: 34ch; color: var(--mute); }
-.service__spec { margin-top: 6px; color: var(--ink); opacity: .9; }
+.service__spec { margin-top: 6px; }
+
+/* ----- How it works -----
+   Phones: a vertical timeline. Each number sits in a ring; a thin gradient
+   line runs from each ring down to the next one. */
+.steps__list {
+  list-style: none;
+  margin: 56px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 40px;
+}
+.step {
+  position: relative;
+  padding-left: 68px;
+  --from: var(--violet);
+  --to: var(--magenta);
+}
+.step:nth-child(2) { --from: var(--magenta); --to: #f3626c; }
+.step:nth-child(3) { --from: #f3626c;        --to: var(--saffron); }
+.step:not(:last-child)::after {    /* the line down to the next ring */
+  content: "";
+  position: absolute;
+  left: 22px;
+  top: 46px;
+  bottom: -38px;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--from), var(--to));
+}
+.step__num {
+  position: absolute;
+  left: 0; top: 0;
+  width: 45px;
+  height: 45px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--from);
+  font-family: var(--font-label);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .08em;
+}
+.step__title { font-size: 40px; padding-top: 6px; margin-bottom: 10px; }
+.step__text { max-width: 34ch; color: var(--mute); }
+
+/* ----- Why Trinetra ----- */
+.why__list {
+  list-style: none;
+  margin: 56px 0 0;
+  padding: 0;
+  display: grid;
+}
+.why__item {
+  position: relative;
+  padding: 28px 0 32px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+}
+.why__item::before {               /* short gradient accent on the top line */
+  content: "";
+  position: absolute;
+  left: 0; top: -1px;
+  width: 40px;
+  height: 2px;
+  background: var(--grad);
+}
+.why__title { font-size: 36px; }
+.why__text { max-width: 38ch; color: var(--mute); }
+
+/* ----- FAQ (accordion) ----- */
+.faq__list { margin-top: 48px; border-bottom: 1px solid var(--line); }
+.faq__item { border-top: 1px solid var(--line); }
+.faq__q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 72px;               /* big, easy tap target */
+  padding: 16px 0;
+  cursor: pointer;
+  list-style: none;
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.faq__q::-webkit-details-marker { display: none; }
+.faq__q:focus-visible { outline-offset: 4px; }
+/* Plus sign made of two thin lines; the upright one folds away when open */
+.faq__icon {
+  position: relative;
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.faq__icon::before,
+.faq__icon::after {
+  content: "";
+  position: absolute;
+  left: 0; top: 7px;
+  width: 16px;
+  height: 2px;
+  background: currentColor;
+  transition: transform .45s var(--ease-out);
+}
+.faq__icon::after { transform: rotate(90deg); }
+.faq__item[open] .faq__icon::after { transform: rotate(0deg); }
+.faq__a { padding: 0 36px 24px 0; }
+.faq__a p { max-width: 60ch; color: var(--mute); }
+@media (hover: hover) {
+  .faq__q:hover .faq__icon { color: var(--magenta); }
+}
+/* Newer browsers: the answer slides open smoothly */
+@supports selector(::details-content) {
+  .faq__item { interpolate-size: allow-keywords; }
+  .faq__item::details-content {
+    height: 0;
+    overflow: clip;
+    transition: height .5s var(--ease-out), content-visibility .5s allow-discrete;
+  }
+  .faq__item[open]::details-content { height: auto; }
+}
 
 /* ----- Work ----- */
 .work__head {
@@ -496,7 +649,6 @@ a { color: inherit; }
   justify-content: space-between;
   gap: 20px;
 }
-.work__head .section__title { margin-bottom: 0; }
 .work__count {
   flex: none;
   padding-bottom: 6px;
@@ -534,14 +686,8 @@ a { color: inherit; }
   object-fit: cover;
   transition: transform 1.6s var(--ease-out);
 }
-.work__brand {
-  margin-top: 16px;
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: 26px;
-  line-height: 1.1;
-}
-.work__meta { margin-top: 6px; }
+.work__brand { margin-top: 16px; font-size: 30px; }
+.work__meta { margin-top: 8px; }
 
 /* "Photo coming soon" placeholder: a dark panel with a hoarding-shaped frame */
 .ph {
@@ -575,9 +721,10 @@ a { color: inherit; }
   position: absolute;
   left: 0; right: 0; bottom: 14px;
   text-align: center;
-  font-family: var(--mono);
+  font-family: var(--font-label);
   font-size: 11px;
-  letter-spacing: .08em;
+  font-weight: 600;
+  letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--mute);
 }
@@ -598,6 +745,7 @@ a { color: inherit; }
   align-items: center;
   min-height: 48px;
   font-size: 22px;
+  font-weight: 500;
   line-height: 1.2;
 }
 .btn--wide { width: 100%; }
@@ -607,12 +755,12 @@ a { color: inherit; }
   padding: 56px 0 calc(var(--safe-b) + 112px);   /* room for the sticky bar on phones */
   border-top: 1px solid var(--line);
   color: var(--mute);
-  font-size: 15px;
+  font-size: 16px;
 }
 .footer__grid { display: grid; gap: 28px; }
 .footer__brand { display: flex; align-items: center; gap: 14px; }
 .footer__brand img { width: 49px; height: auto; }
-.footer__name { font-family: var(--serif); font-size: 26px; line-height: 1.1; color: var(--ink); }
+.footer__name { font-size: 28px; color: var(--ink); }
 .footer__tag { margin-top: 4px; }
 .footer__info { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 
@@ -656,11 +804,9 @@ a { color: inherit; }
 .reveal-on .reveal.is-in { opacity: 1; transform: none; }
 .reveal-on .reveal.is-in .line > span { transform: none; }
 
-/* =========================================================
-   6d. 404 PAGE ("This hoarding is still empty.")
+/* ----- 404 page ("This hoarding is still empty.")
    Phone first: an empty hoarding at the top, text and button low,
-   in easy thumb reach.
-   ========================================================= */
+   in easy thumb reach. ----- */
 .nf {
   position: relative;
   min-height: 100vh;
@@ -708,62 +854,114 @@ a { color: inherit; }
 .nf__text .btn { width: 100%; }
 
 /* =========================================================
-   7. BIGGER SCREENS
+   8. BIGGER SCREENS
    "Landscape" here means the screen is not tall and narrow
    (the same rule film.js uses to pick desktop frames).
    ========================================================= */
 @media (min-aspect-ratio: 4/5) {
-  .display { font-size: clamp(32px, min(5.2vw, 9.5vh), 120px); }
-  .display--center { font-size: clamp(40px, min(6vw, 11vh), 132px); }
   .label { font-size: 12px; }
 
+  /* Film headlines: large, but never taller than the screen allows */
+  .film .display { font-size: clamp(3rem, min(7vw, 13vh), 7.5rem); }
   .trio {
     flex-direction: row;          /* Imagine. Believe. Achieve. in a row */
-    gap: .35em;
-    font-size: clamp(44px, min(7vw, 13vh), 150px);
+    gap: .3em;
+    font-size: clamp(3.5rem, min(6.5vw, 15vh), 8rem);   /* leaves room for the chapter name */
   }
 
-  /* Static layout: text in the left part of each scene */
-  .scene { padding-left: clamp(24px, 6vw, 112px); padding-right: clamp(24px, 6vw, 112px); }
-  .card { max-width: 44vw; }
-  .scene--finale { justify-content: center; }
-  .card--finale { max-width: 36vw; }
+  /* Scenes: text sits 5.5vw from the edges (top cards stay below the header) */
+  .scene {
+    padding:
+      max(5.5vw, calc(var(--header-h) + 16px))
+      max(5.5vw, var(--safe-r))
+      max(5.5vw, calc(var(--safe-b) + 24px))
+      max(5.5vw, var(--safe-l));
+  }
+  .at-desk-top    { justify-content: flex-start; }
+  .at-desk-bottom { justify-content: flex-end; }
+  .at-desk-middle { justify-content: center; }
+  .card { max-width: 46vw; }
+  .card__body { font-size: 19px; }
+  .card--finale { max-width: max(34vw, 400px); }  /* left third; both buttons fit in one row */
   .card--finale .btn { flex: 0 0 auto; }
-  .scrim--finale {
+
+  /* Gradients: from the text's side, fading out towards the right */
+  .at-desk-top .scrim,
+  .at-desk-bottom .scrim {
+    -webkit-mask-image: linear-gradient(to right, #000 36%, transparent 80%);
+            mask-image: linear-gradient(to right, #000 36%, transparent 80%);
+  }
+  .at-desk-top .scrim {
+    background: linear-gradient(to bottom,
+      rgba(var(--shade), .85) 0%, rgba(var(--shade), .75) 45%, rgba(var(--shade), .35) 66%, rgba(var(--shade), 0) 85%);
+  }
+  .at-desk-bottom .scrim {
+    background: linear-gradient(to top,
+      rgba(var(--shade), .85) 0%, rgba(var(--shade), .75) 45%, rgba(var(--shade), .35) 66%, rgba(var(--shade), 0) 85%);
+  }
+  /* Very bright frame (white flex under the text): a deeper, wider gradient */
+  .scene--bright.at-desk-top .scrim {
+    -webkit-mask-image: linear-gradient(to right, #000 45%, transparent 90%);
+            mask-image: linear-gradient(to right, #000 45%, transparent 90%);
+    background: linear-gradient(to bottom,
+      rgba(var(--shade), .9) 0%, rgba(var(--shade), .86) 55%, rgba(var(--shade), .5) 75%, rgba(var(--shade), 0) 95%);
+  }
+  .at-desk-middle .scrim {
+    -webkit-mask-image: none;
+            mask-image: none;
     background: linear-gradient(to right,
-      rgba(5, 4, 9, .85) 0%, rgba(5, 4, 9, .55) 28%, rgba(5, 4, 9, 0) 52%);
+      rgba(var(--shade), .85) 0%, rgba(var(--shade), .6) 30%, rgba(var(--shade), 0) 55%);
   }
 
-  /* Film mode positions */
-  .film-on .card {
-    left: clamp(24px, 6vw, 112px);
-    right: auto;
-  }
-  .film-on .card--open { bottom: clamp(40px, 11vh, 120px); }
-  /* Finale: left third, vertically centred (the hoarding is on the right) */
-  .film-on .card--finale {
-    top: calc(50% + var(--header-h) / 2);   /* centred in the space below the header */
-    bottom: auto;
-    transform: translateY(-50%);
-    max-width: max(36vw, 380px);             /* both buttons fit in one row */
-  }
   .film-on .cue { left: auto; right: 32px; transform: none; }
 }
 
-/* Phones turned sideways: very little height, so tighten the finale */
+/* Chapter name beside the progress line: big screens only (not phones held sideways) */
+@media (min-aspect-ratio: 4/5) and (min-height: 501px) {
+  .progress__tick { width: 12px; }
+  .progress__name {
+    display: block;
+    position: absolute;
+    right: 20px;
+    transform: translateY(-50%);
+    padding: 5px 9px;
+    border-radius: 4px;
+    background: rgba(var(--shade), .6);
+    white-space: nowrap;
+    font-family: var(--font-label);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink);
+    opacity: 0;
+    transition: opacity .4s ease, top .7s var(--ease-out);
+  }
+  .progress__name.is-on { opacity: 1; }
+}
+
+/* Phones turned sideways: very little height, so everything gets tighter */
 @media (min-aspect-ratio: 4/5) and (max-height: 500px) {
-  .card--finale .label { margin-bottom: 8px; }
-  .card--finale .actions { margin-top: 14px; }
-  .card--finale .btn { min-height: 48px; padding: 0 20px; font-size: 15px; }
   /* Keep clear of the iPhone notch when the phone is sideways */
   :root { --gutter: max(20px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)); }
-  .film-on .card { left: max(24px, env(safe-area-inset-left, 0px)); }
-  .film-on .cue { right: max(32px, env(safe-area-inset-right, 0px)); }
+  .scene {
+    padding:
+      calc(var(--header-h) + 4px)
+      max(24px, var(--safe-r))
+      calc(var(--safe-b) + 20px)
+      max(24px, var(--safe-l));
+  }
+  .film .display { font-size: clamp(2.25rem, 11vh, 3rem); }
+  .card .label { margin-bottom: 8px; }
+  .card__body { margin-top: 10px; font-size: 16px; line-height: 1.45; max-width: 36ch; }
+  .card--finale .actions { margin-top: 14px; }
+  .card--finale .btn { min-height: 48px; padding: 0 20px; font-size: 16px; }
+  .film-on .cue { right: max(32px, var(--safe-r)); }
 
   /* Slimmer action bar, so it doesn't eat the short screen */
   .actionbar { padding-top: 6px; padding-bottom: calc(var(--safe-b) + 6px); grid-template-columns: 1fr 1fr; }
   .actionbar__btn { min-height: 48px; }
-  .film-on .card--open { bottom: 28px; }
 }
 
 @media (min-width: 768px) {
@@ -772,7 +970,6 @@ a { color: inherit; }
   .header__brand span { font-size: 26px; }
 
   .section { padding: clamp(112px, 11vw, 192px) 0; }
-  .section__title { font-size: clamp(56px, 7vw, 120px); }
   .section__lead { font-size: 19px; }
 
   /* What we do: three columns */
@@ -783,7 +980,19 @@ a { color: inherit; }
   }
   .service:nth-child(2) { transition-delay: .12s; }
   .service:nth-child(3) { transition-delay: .24s; }
-  .service__title { font-size: clamp(40px, 3.6vw, 56px); }
+  .service__title { font-size: clamp(44px, 4vw, 64px); }
+
+  /* Why Trinetra: two by two */
+  .why__list {
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: clamp(32px, 5vw, 96px);
+    margin-top: clamp(56px, 6vw, 96px);
+  }
+  .why__item:nth-child(even) { transition-delay: .12s; }
+  .why__title { font-size: clamp(36px, 3.4vw, 52px); }
+
+  /* FAQ: bigger questions */
+  .faq__q { font-size: 21px; min-height: 80px; }
 
   /* Work: a grid instead of a carousel */
   .work__count { display: none; }
@@ -823,8 +1032,42 @@ a { color: inherit; }
   }
   .nf__board { width: min(38vw, 560px); margin-bottom: 0; }
   .nf__text { max-width: 560px; }
-  .nf__title { font-size: clamp(56px, 6.4vw, 112px); }
+  .nf__title { font-size: clamp(3.5rem, 6.4vw, 7rem); }
   .nf__text .btn { width: auto; }
+}
+
+@media (min-width: 1024px) {
+  body { font-size: 18px; }
+
+  /* How it works: four columns, the line runs across between the rings */
+  .steps__list {
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(24px, 3vw, 48px);
+    margin-top: clamp(56px, 6vw, 96px);
+  }
+  .step { padding-left: 0; padding-top: 72px; }
+  .step:not(:last-child)::after {
+    left: 56px;
+    right: calc(-1 * clamp(24px, 3vw, 48px) + 10px);
+    top: 22px;
+    bottom: auto;
+    width: auto;
+    height: 1px;
+    background: linear-gradient(to right, var(--from), var(--to));
+  }
+  .step:nth-child(2) { transition-delay: .1s; }
+  .step:nth-child(3) { transition-delay: .2s; }
+  .step:nth-child(4) { transition-delay: .3s; }
+  .step__title { font-size: clamp(40px, 3.4vw, 56px); padding-top: 0; }
+
+  /* FAQ: headline left, questions right */
+  .faq__grid {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr;
+    gap: 64px;
+    align-items: start;
+  }
+  .faq__list { margin-top: 0; }
 }
 
 @media (min-width: 1100px) {
