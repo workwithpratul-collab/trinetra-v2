@@ -5,11 +5,14 @@
    indicator on the right edge.
 
    How it works, in short:
-   - Every frame is a normal Image. The browser manages their memory.
+   - Two layers per frame. Layer 1: a normal Image, kept forever once it
+     has loaded (the safe fallback). Layer 2: an ImageBitmap, an already
+     unpacked copy that draws instantly, made only for frames within ±40
+     of the playhead (ahead of the scroll direction first) and freed again
+     beyond ±60.
    - Frames near the scroll position download first (6 at a time), then
      the rest of the film, every 8th frame first.
-   - Frames close to the playhead (±20) are decoded ahead of time with
-     img.decode(), so drawing them never has to wait.
+   - The poster only shows before any frame has loaded.
    - The playhead glides toward the scroll position. ONE function,
      filmFrame(), gives the current frame; the canvas AND the text cards
      both use it, so they can never drift apart.
@@ -31,7 +34,9 @@
   var WATERMARK_RIGHT = 40;   // watermark sits within 40px of the right edge (frame pixels)
   var MAX_LOADS = 6;          // at most 6 downloads at the same time
   var NEAR = 60;              // download every frame within ±60 of the playhead first
-  var DECODE_NEAR = 20;       // decode frames within ±20 of the playhead ahead of time
+  var BMP_KEEP = 40;          // make ready-to-draw bitmaps for frames within ±40 of the playhead
+  var BMP_RELEASE = 60;       // free bitmaps further away than ±60 (the plain Image stays)
+  var MAX_BITMAPS = 4;        // at most 4 bitmaps being made at the same time
   var EASE = 0.2;             // playhead moves 20% of the way to the scroll target per frame (at 60 fps)
   var JUMP = 240;             // a jump bigger than this (e.g. the browser restoring your position) snaps instead of gliding
   var MAX_SCALE = 1.5;        // canvas never has more than 1.5 pixels per frame pixel: more costs speed, adds no detail
@@ -122,11 +127,13 @@
       name: name,
       dir: 'assets/frames/' + name + '/',
       size: FRAME_SIZE[name],
-      imgs: new Array(FRAME_COUNT),
+      imgs: new Array(FRAME_COUNT),           // layer 1: plain Image, kept forever once loaded
       state: new Uint8Array(FRAME_COUNT),     // 0 = not asked for, 1 = downloading, 2 = loaded, 3 = failed
-      decoded: new Uint8Array(FRAME_COUNT),   // 1 = decode asked for, 2 = decoded
+      files: new Array(FRAME_COUNT),          // the downloaded file (compressed), source for bitmaps
+      bmps: new Array(FRAME_COUNT),           // layer 2: ImageBitmap speed-up, only near the playhead
+      bmpBusy: new Uint8Array(FRAME_COUNT),   // 1 = bitmap being made right now
+      bmpLive: [],                            // indexes that have a bitmap right now
       loadedCount: 0,
-      decodedCount: 0,
       far: far,
       farPos: 0
     };
@@ -176,71 +183,103 @@
     loads++;
     var img = new Image();
     img.decoding = 'async';
+    if (CAN_BITMAP) {
+      // Download the file once. The plain Image is made from it, and later
+      // bitmaps are made from it too: from a file, the browser unpacks the
+      // picture on a background thread (from an <img> it would block scrolling).
+      fetch(frameUrl(set, i)).then(function (res) {
+        if (!res.ok) throw new Error(res.status);
+        return res.blob();
+      }).then(function (file) {
+        set.files[i] = file;
+        img.src = URL.createObjectURL(file);   // kept for good, like the Image itself
+      }).catch(function () { img.onerror(); });
+    } else {
+      img.src = frameUrl(set, i);
+    }
     img.onload = function () {
       set.imgs[i] = img;
       set.state[i] = 2;
       set.loadedCount++;
       loads--;
       if (set === active) {
-        decodeIfNear(set, i);
+        feedBitmaps();                  // make a bitmap if it's near the playhead
         wake(false);                    // a closer frame may now exist: look again
       }
       pump();
     };
     img.onerror = function () {
+      if (set.state[i] !== 1) return;       // already handled
       set.state[i] = 3;
       loads--;
       pump();
     };
-    img.src = frameUrl(set, i);
   }
 
-  /* ---------- Decoding ahead (only near the playhead) ---------- */
-  function decodeIfNear(set, i) {
-    if (Math.abs(i - current) > DECODE_NEAR && Math.abs(i - target) > DECODE_NEAR) return;
-    if (set.state[i] !== 2 || set.decoded[i]) return;
-    set.decoded[i] = 1;
-    var img = set.imgs[i];
-    if (!img.decode) { set.decoded[i] = 2; set.decodedCount++; return; }
-    img.decode().then(function () {
-      set.decoded[i] = 2;
-      set.decodedCount++;
-      if (set === active) wake(false);  // a ready-to-draw frame may now be the best choice
+  /* ---------- Speed layer: ImageBitmaps near the playhead ----------
+     A plain Image may have to be unpacked (decoded) at the moment it is
+     drawn, which can freeze a frame. An ImageBitmap is already unpacked,
+     so drawing it is instant. We make bitmaps only for frames near the
+     playhead, ahead of the scroll direction first, and free the far ones.
+     The plain Images are never freed, so there is always a fallback. */
+  var CAN_BITMAP = typeof window.createImageBitmap === 'function' && typeof window.fetch === 'function';
+  var bmpMaking = 0;
+  var direction = 1;     // +1 scrolling down (forward in the film), -1 scrolling up
+
+  function makeBitmap(set, i) {
+    if (i < 0 || i >= FRAME_COUNT || bmpMaking >= MAX_BITMAPS) return;
+    if (set.state[i] !== 2 || !set.files[i] || set.bmps[i] || set.bmpBusy[i]) return;
+    set.bmpBusy[i] = 1;
+    bmpMaking++;
+    createImageBitmap(set.files[i]).then(function (bmp) {     // from the file: unpacked off the main thread
+      bmpMaking--;
+      set.bmpBusy[i] = 0;
+      if (set !== active || isFarForBitmap(i)) {
+        bmp.close();                    // not needed any more
+      } else {
+        set.bmps[i] = bmp;
+        set.bmpLive.push(i);
+        wake(false);                    // a faster version of a nearby frame is ready
+      }
+      feedBitmaps();
     }, function () {
-      set.decoded[i] = 0;               // try again next time (the image itself still draws)
+      bmpMaking--;
+      set.bmpBusy[i] = 0;               // no bitmap: the plain Image still draws
     });
   }
 
-  // Ask for decoding of every loaded frame within ±DECODE_NEAR
-  function decodeAround(set, x) {
-    var c = indexAt(x);
-    for (var d = -DECODE_NEAR; d <= DECODE_NEAR; d++) {
-      var i = c + d;
-      if (i >= 0 && i < FRAME_COUNT && set.state[i] === 2 && !set.decoded[i]) decodeIfNear(set, i);
-    }
+  // Start bitmaps for frames within ±BMP_KEEP: first the frames we are
+  // moving toward, then the ones behind us.
+  function feedBitmaps() {
+    if (!CAN_BITMAP || !active) return;
+    var c = indexAt(target);
+    for (var d = 0; d <= BMP_KEEP && bmpMaking < MAX_BITMAPS; d++) makeBitmap(active, c + direction * d);
+    for (d = 1; d <= BMP_KEEP && bmpMaking < MAX_BITMAPS; d++) makeBitmap(active, c - direction * d);
   }
 
-  // Closest LOADED frame to i, searching both directions at once.
-  // If that one isn't decoded yet but a decoded frame is only a few frames
-  // further (PREFER), use the decoded one: drawing it is instant, while an
-  // undecoded one makes the browser decode it on the spot (a stutter).
-  // Only if nothing at all has loaded does the poster (frame 1) show.
-  var PREFER = 8;
-  function nearestLoaded(set, i) {
-    var first = -1, firstD = 0;
-    for (var d = 0; d < FRAME_COUNT; d++) {
-      var a = i - d, b = i + d;
-      if (a >= 0 && set.state[a] === 2) {
-        if (set.decoded[a] === 2) return a;
-        if (first < 0) { first = a; firstD = d; }
-      }
-      if (b < FRAME_COUNT && set.state[b] === 2) {
-        if (set.decoded[b] === 2) return b;
-        if (first < 0) { first = b; firstD = d; }
-      }
-      if (first >= 0 && d - firstD >= PREFER) break;
+  function isFarForBitmap(i) {
+    return Math.abs(i - current) > BMP_RELEASE && Math.abs(i - target) > BMP_RELEASE;
+  }
+
+  // Free bitmaps outside ±BMP_RELEASE (all of them for a set that isn't shown)
+  function releaseBitmaps(set) {
+    var keep = [];
+    for (var k = 0; k < set.bmpLive.length; k++) {
+      var i = set.bmpLive[k];
+      if (set === active && !isFarForBitmap(i)) { keep.push(i); continue; }
+      set.bmps[i].close();
+      set.bmps[i] = null;
     }
-    return first;
+    set.bmpLive = keep;
+  }
+
+  // Closest LOADED frame to i, searching both directions at once
+  function nearestLoaded(set, i) {
+    for (var d = 0; d < FRAME_COUNT; d++) {
+      if (i - d >= 0 && set.state[i - d] === 2) return i - d;
+      if (i + d < FRAME_COUNT && set.state[i + d] === 2) return i + d;
+    }
+    return -1;
   }
 
   /* ---------- Drawing ---------- */
@@ -262,9 +301,10 @@
 
   // Like CSS object-fit: cover. Desktop frames get the extra zoom and a
   // crop that takes at least 40px off the right edge (hides the watermark).
+  // Works for a plain Image and an ImageBitmap.
   function drawCover(img, isDesktopFrame, focusX) {
     var cw = canvas.width, ch = canvas.height;
-    var iw = img.naturalWidth, ih = img.naturalHeight;
+    var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
     if (!iw || !ih) return;
     var scale = Math.max(cw / iw, ch / ih) * (isDesktopFrame ? DESKTOP_ZOOM : 1);
     var sw = cw / scale, sh = ch / scale;     // part of the frame we show
@@ -278,27 +318,36 @@
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
   }
 
-  var drawnKey = '';        // what is on the canvas right now
+  var drawnKey = '';        // what is on the canvas right now (set + frame + layer)
   var drawnIndex = -1;      // its frame index (-1 = poster)
+  var drawnLevel = 'none';  // bitmap / image / nearest / poster (shown in ?debug)
   var needsDraw = true;
 
+  // Drawing order for the frame the text cards are on:
+  //   1. its bitmap (instant)            2. its plain Image
+  //   3. the nearest loaded frame (its bitmap if it has one, else its Image)
+  //   4. the poster: ONLY while no frame of this set has loaded yet
   function draw() {
     var want = indexAt(filmFrame() - 1);          // the same frame the text cards use
-    var n = nearestLoaded(active, want);
-    var key = n >= 0 ? active.name + n : 'poster';
-    if (!needsDraw && key === drawnKey) return;   // nothing changed: skip
-    var isDesktop = active.name === 'desktop';
-    if (n >= 0) {
-      drawCover(active.imgs[n], isDesktop, isDesktop ? null : portraitFocus(n));
-    } else if (posters[active.name].naturalWidth) {
-      drawCover(posters[active.name], isDesktop);
-    } else {
-      needsDraw = false;                          // nothing to draw yet: the poster's onload wakes us
-      return;
+    var set = active, n, pic, level;
+    if (set.bmps[want]) { n = want; pic = set.bmps[want]; level = 'bitmap'; }
+    else if (set.state[want] === 2) { n = want; pic = set.imgs[want]; level = 'image'; }
+    else {
+      n = nearestLoaded(set, want);
+      if (n >= 0) { pic = set.bmps[n] || set.imgs[n]; level = 'nearest'; }
+      else if (posters[set.name].naturalWidth) { pic = posters[set.name]; level = 'poster'; }
+      else { needsDraw = false; return; }          // nothing to draw yet: the poster's onload wakes us
     }
+    // Same frame from the same layer as last time? Nothing to do. (A frame
+    // first drawn from its Image is redrawn once its bitmap is ready: cheap.)
+    var key = set.name + n + (pic === set.bmps[n] ? 'b' : 'i');
+    if (!needsDraw && key === drawnKey) { drawnLevel = level; return; }
+    var isDesktop = set.name === 'desktop';
+    drawCover(pic, isDesktop, isDesktop || n < 0 ? null : portraitFocus(n));
     needsDraw = false;
     drawnKey = key;
     drawnIndex = n;
+    drawnLevel = level;
   }
 
   /* ---------- Layout ---------- */
@@ -332,7 +381,9 @@
     // Switch frame set if the screen shape changed (rotation, resize)
     var name = pickSetName();
     if (!active || active.name !== name) {
+      var old = active;
       active = sets[name];
+      if (old) releaseBitmaps(old);             // frees all of the old set's bitmaps (its Images stay)
       var poster = posters[name];
       if (!poster.src) poster.src = name === 'desktop' ? 'assets/poster.webp' : 'assets/frames/portrait/f0001.webp';
       needsDraw = true;
@@ -350,8 +401,12 @@
     var p = (y - filmTop) / filmScroll;
     var t = posFromProgress(p < 0 ? 0 : p > 1 ? 1 : p);
     var moved = indexAt(t) !== indexAt(target);
+    if (t !== target) direction = t > target ? 1 : -1;   // which way the visitor is moving
     target = t;
-    if (moved && active) pump();                    // new nearby frames to fetch first
+    if (moved && active) {
+      pump();                                       // new nearby frames to fetch first
+      feedBitmaps();                                // and bitmaps ahead of us
+    }
     var hide = y > 24;
     if (hide !== cueHidden) { cueHidden = hide; cue.classList.toggle('is-hidden', hide); }
     wake(false);                                    // ALWAYS restart the loop
@@ -520,7 +575,8 @@
     var index = indexAt(f - 1);
     if (index !== lastIndex) {
       updateChapters(index + 1);
-      decodeAround(active, current);
+      releaseBitmaps(active);
+      feedBitmaps();
       lastIndex = index;
     }
     draw();
@@ -549,8 +605,9 @@
       'target frame  ' + (indexAt(target) + 1) + '\n' +
       'film frame    ' + (indexAt(filmFrame() - 1) + 1) + '  (text cards use this)\n' +
       'drawn frame   ' + (drawnIndex >= 0 ? drawnIndex + 1 : 'poster') + '\n' +
+      'drawn from    ' + drawnLevel + '\n' +
       'loaded        ' + active.loadedCount + ' / ' + FRAME_COUNT + '  (' + active.name + (LITE ? ', lite' : '') + ')\n' +
-      'decoded       ' + active.decodedCount + '\n' +
+      'bitmaps alive ' + active.bmpLive.length + (CAN_BITMAP ? '' : '  (not supported: images only)') + '\n' +
       'downloading   ' + loads + '\n' +
       'loop          ' + (running ? 'running' : 'sleeping');
   }
@@ -582,8 +639,9 @@
     filmEnd: function () { return filmTop + filmScroll; },
     // For testing in the browser console
     state: function () {
-      return { want: indexAt(target) + 1, at: indexAt(filmFrame() - 1) + 1, drawn: drawnKey, set: active.name,
-               loaded: active.loadedCount, decoded: active.decodedCount, running: running };
+      return { want: indexAt(target) + 1, at: indexAt(filmFrame() - 1) + 1,
+               drawn: drawnLevel === 'poster' ? 'poster' : active.name + drawnIndex, level: drawnLevel, set: active.name,
+               loaded: active.loadedCount, bitmaps: active.bmpLive.length, running: running };
     }
   };
 })();
