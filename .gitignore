@@ -1,0 +1,9 @@
+# Windows system files
+Thumbs.db
+desktop.ini
+
+# VS Code settings (personal to each computer)
+.vscode/
+
+# Original, full-size work photos (only the converted WebP files are published)
+assets/work-originals/
