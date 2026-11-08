@@ -105,8 +105,8 @@ Calm warm neutrals with ONE accent. Dark site only.
 **Amber** (floodlights, sodium street lights) is used sparingly, only for: chapter numbers and hairlines, the active chapter tick and name, spec lines (sizes and materials), "…TO YOUR SKYLINE.", the FAQ open/close icon, and the primary button fill.
 **Brand colours** (`--brand-violet` #9b4dff, `--brand-magenta` #e8399a, `--brand-saffron` #ff8a3d, gradient violet → magenta → saffron) are reserved for exactly four places: the logo itself; "Imagine. Believe. Achieve." in the black moment (one colour per word); the progress line fill; the primary button's hover sweep.
 
-**Accent phrase colours** (scene-light tokens, ONLY for the serif phrase in headlines): `--violet-soft` #b892ff (factory LED), `--saffron` #ff9a4d (printed arc), `--amber`, `--rose` #ff7aa8 (twilight, magenta banner), `--gold` #ffd27a (lit hoarding at night).
-Film: blank sheet → ink · 01 Print → violet-soft · 02 Finish → saffron · 03 Crew → amber · From our floor… → ink · 04 Install → rose · 05 Light → gold · finale → amber. Sections after the film: amber, except Contact ("up there.") → gold. All measured ≥ 5.9:1 over the real frames + gradients.
+**Accent phrase colours** (scene-light tokens, ONLY for the serif phrase in headlines): `--ice` #9fd4ff (factory work lights on the fresh sheet), `--violet-soft` #b892ff (factory LED), `--saffron` #ff9a4d (printed arc), `--amber`, `--rose` #ff7aa8 (twilight, magenta banner), `--gold` #ffd27a (lit hoarding at night).
+Film: blank sheet → ice · 01 Print → violet-soft · 02 Finish → saffron · 03 Crew → amber · From our floor… → ink · 04 Install → rose · 05 Light → gold · finale → amber. Sections after the film: amber, except Contact ("up there.") → gold. All measured ≥ 5.9:1 over the real frames + gradients.
 Every text colour must pass WCAG AA on its background.
 
 ## Interactions

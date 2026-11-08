@@ -22,16 +22,16 @@
       syncTouchLerp: 0.07,
       touchInertiaMultiplier: 24,  // ...with a shorter "fling" than native (default 35)
       allowNestedScroll: true,     // sideways carousels still swipe natively
-      autoRaf: false               // we run Lenis from our own loop (section 2)
+      autoRaf: true                // Lenis runs its own smooth-scroll timing
     });
     window.TrinetraLenis = lenis;
   }
 
-  /* ---------- 2. ONE loop and ONE scroll listener for the whole page ----------
-     Every screen refresh: Lenis moves the scroll a little, then the film
-     draws. Lenis's "scroll" event is the single place the scroll position
-     comes from; it feeds the film, the header and the swipe catcher.
-     (Without Lenis, the browser's own scroll event does the same job.) */
+  /* ---------- 2. ONE scroll listener for the whole page ----------
+     Lenis's "scroll" event is the single place the scroll position comes
+     from; it feeds the film (which wakes its animation loop), the header
+     and the swipe catcher. (Without Lenis, the browser's own scroll event
+     does the same job.) */
   function onScroll(y, e) {
     if (film) film.setScroll(y);
     updateHeader(y);
@@ -42,14 +42,6 @@
   } else {
     window.addEventListener('scroll', function () { onScroll(window.scrollY, null); }, { passive: true });
   }
-  if (lenis || film) {
-    requestAnimationFrame(function loop(time) {
-      if (lenis) lenis.raf(time);     // 1. smooth scroll step (fires "scroll" if it moved)
-      if (film) film.tick(time);      // 2. film + text cards (does nothing when idle)
-      requestAnimationFrame(loop);
-    });
-  }
-
   /* ---------- 3. "Catch" fast swipes at text cards ----------
      If a fast swipe or wheel spin enters a text moment, glide to the
      middle of it and pause briefly, so the words can be read. */

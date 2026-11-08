@@ -24,6 +24,7 @@
   /* Scene-light colours: ONLY for the serif accent phrase in headlines.
      Each one is taken from the light in its scene of the film.
      All pass WCAG AA on --night and over the dark gradients behind film text. */
+  --ice:         #9fd4ff;   /* cool white of the factory work lights on the fresh sheet (opening) */
   --violet-soft: #b892ff;   /* factory LED light      (01 Print) */
   --saffron:     #ff9a4d;   /* the printed arc        (02 Finish) */
   --rose:        #ff7aa8;   /* twilight clouds, magenta banner (04 Install) */
@@ -142,6 +143,7 @@ a { color: inherit; }
 
 /* Accent phrase colours in the film: the light of each scene.
    Only the serif phrase gets colour; the capitals stay --ink. */
+.accent--ice     { color: var(--ice); }           /* opening: work lights on the blank sheet */
 .accent--violet  { color: var(--violet-soft); }   /* 01 Print: factory LED light */
 .accent--saffron { color: var(--saffron); }       /* 02 Finish: the printed arc */
 .accent--amber   { color: var(--amber); }         /* 03 Crew, finale: floodlights, sunset */
