@@ -18,15 +18,23 @@
   --panel:   #16141a;   /* cards and panels */
   --ink:     #f4efe8;   /* warm white, main text */
   --mute:    #9e968e;   /* secondary text */
-  --amber:   #ffa23a;   /* the single accent: use sparingly */
+  --amber:   #ffa23a;   /* the main accent (floodlights, sunset): use sparingly */
   --line:    rgba(244, 239, 232, .14);
+
+  /* Scene-light colours: ONLY for the serif accent phrase in headlines.
+     Each one is taken from the light in its scene of the film.
+     All pass WCAG AA on --night and over the dark gradients behind film text. */
+  --violet-soft: #b892ff;   /* factory LED light      (01 Print) */
+  --saffron:     #ff9a4d;   /* the printed arc        (02 Finish) */
+  --rose:        #ff7aa8;   /* twilight clouds, magenta banner (04 Install) */
+  --gold:        #ffd27a;   /* lit hoarding at night  (05 Light, Contact) */
 
   /* Brand colours: ONLY for the logo, "Imagine. Believe. Achieve.",
      the progress line fill and the primary button's hover sweep. */
-  --violet:  #9b4dff;
-  --magenta: #e8399a;
-  --saffron: #ff8a3d;
-  --grad: linear-gradient(90deg, var(--violet), var(--magenta) 52%, var(--saffron));
+  --brand-violet:  #9b4dff;
+  --brand-magenta: #e8399a;
+  --brand-saffron: #ff8a3d;
+  --grad: linear-gradient(90deg, var(--brand-violet), var(--brand-magenta) 52%, var(--brand-saffron));
   --shade: 6, 5, 8;     /* the dark used in gradients behind text: rgba(var(--shade), .8) */
 
   /* Typography "D · Highway" + a serif for contrast (about 75% / 25%) */
@@ -114,7 +122,8 @@ a { color: inherit; }
 
 /* The ONE highlighted phrase per screen: the contrast face.
    Tall condensed capitals next to a soft lowercase serif italic.
-   Same colour as the headline: the contrast comes from the typeface.
+   Colour: --ink by default; in the film it takes the light of its scene
+   (accent--* classes below), after the film it is amber.
    1.1× size because a serif's lowercase looks smaller than capitals;
    it sits on the same baseline as the capitals. */
 .accent {
@@ -131,10 +140,22 @@ a { color: inherit; }
 /* Big Shoulders is spaced for capitals; give the space before the italic a hair more air */
 .display .accent { padding-left: .02em; }
 
+/* Accent phrase colours in the film: the light of each scene.
+   Only the serif phrase gets colour; the capitals stay --ink. */
+.accent--violet  { color: var(--violet-soft); }   /* 01 Print: factory LED light */
+.accent--saffron { color: var(--saffron); }       /* 02 Finish: the printed arc */
+.accent--amber   { color: var(--amber); }         /* 03 Crew, finale: floodlights, sunset */
+.accent--rose    { color: var(--rose); }          /* 04 Install: twilight clouds */
+.accent--gold    { color: var(--gold); }          /* 05 Light: lit hoarding at night */
+
+/* Sections after the film: the serif phrase is amber, Contact's is gold */
+.section__title .accent { color: var(--amber); }
+.contact__title .accent { color: var(--gold); }
+
 /* Brand colours, only for "Imagine. Believe. Achieve." */
-.c-violet  { color: var(--violet); }
-.c-magenta { color: var(--magenta); }
-.c-saffron { color: var(--saffron); }
+.c-violet  { color: var(--brand-violet); }
+.c-magenta { color: var(--brand-magenta); }
+.c-saffron { color: var(--brand-saffron); }
 
 /* Line mask: .line is a window with overflow hidden; the span inside
    can rise into it (film.js in the film, scroll reveals below it).
@@ -226,7 +247,7 @@ a { color: inherit; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  transition: background-color .5s ease, opacity .5s ease, -webkit-backdrop-filter .5s ease, backdrop-filter .5s ease;
+  transition: background-color .5s ease, opacity .5s ease;
 }
 .header__brand,
 .header__link {
@@ -259,7 +280,7 @@ a { color: inherit; }
   .header__link:hover { background-size: calc(100% - 24px) 1px; }
 }
 
-/* Subtle during the film; a soft glass bar after it */
+/* Subtle during the film; a solid bar after it */
 .film-on .header { opacity: .82; }
 /* A soft dark fade behind the header, so it stays readable over bright frames */
 .film-on .header::before {
@@ -275,9 +296,9 @@ a { color: inherit; }
 .film-on .header:focus-within,
 .is-past-film .header { opacity: 1; }
 .is-past-film .header {
-  background: rgba(11, 10, 13, .72);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-          backdrop-filter: blur(14px) saturate(140%);
+  /* Solid, no backdrop blur: a blur over the film canvas would make
+     the browser re-blur the picture on every frame */
+  background: var(--night);
   box-shadow: 0 1px 0 var(--line);
 }
 
@@ -310,18 +331,23 @@ a { color: inherit; }
 .at-phone-top    { justify-content: flex-start; }
 .at-phone-bottom { justify-content: flex-end; }
 
-.still { position: absolute; inset: 0; }
+.scene { isolation: isolate; }            /* so the still photo can sit behind the gradient (z-index -1) */
+.still { position: absolute; inset: 0; z-index: -1; }
 .still img { width: 100%; height: 100%; object-fit: cover; }
 .still--dim::after { content: ""; position: absolute; inset: 0; background: rgba(var(--shade), .55); }
 
 /* Soft dark gradient on the side where the text sits.
-   Only as strong as needed for readable (WCAG AA) text. */
-.scrim { position: absolute; inset: 0; pointer-events: none; }
-.at-phone-top .scrim {
+   Only as strong as needed for readable (WCAG AA) text.
+   It is the scene's own ::before, painted once and never changed:
+   during the film only the scene's opacity moves, which is cheap. */
+.scrim,
+.scene.timed::before { position: absolute; inset: 0; pointer-events: none; }
+.scene.timed::before { content: ""; }
+.at-phone-top::before {
   background: linear-gradient(to bottom,
     rgba(var(--shade), .88) 0%, rgba(var(--shade), .8) 30%, rgba(var(--shade), .45) 46%, rgba(var(--shade), 0) 64%);
 }
-.at-phone-bottom .scrim {
+.at-phone-bottom::before {
   background: linear-gradient(to top,
     rgba(var(--shade), .86) 0%, rgba(var(--shade), .7) 32%, rgba(var(--shade), .28) 50%, rgba(var(--shade), 0) 64%);
 }
@@ -442,6 +468,13 @@ a { color: inherit; }
 .film-on .timed.is-on .card { pointer-events: auto; }
 .film-on .timed .line > span { transform: translateY(130%); }
 .film-on .timed .fade { opacity: 0; }
+/* film.js adds "is-moving" only while a card animates in or out. During
+   that time the browser keeps these parts on their own layers, so moving
+   them is cheap; afterwards the layers are given back (saves memory). */
+.film-on .timed.is-moving { will-change: opacity; }
+.film-on .timed.is-moving .line > span,
+.film-on .timed.is-moving .card { will-change: transform; }
+.film-on .timed.is-moving .fade { will-change: transform, opacity; }
 
 /* Chapter indicator: thin line on the right edge with one tick per chapter */
 .film-on .progress {
@@ -454,7 +487,7 @@ a { color: inherit; }
 .progress__fill {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, var(--violet), var(--magenta), var(--saffron));
+  background: linear-gradient(to bottom, var(--brand-violet), var(--brand-magenta), var(--brand-saffron));
   transform: scaleY(0);
   transform-origin: top;
 }
@@ -851,9 +884,7 @@ a { color: inherit; }
   grid-template-columns: 1fr 1.4fr;
   gap: 10px;
   padding: 10px var(--gutter) calc(var(--safe-b) + 10px);
-  background: rgba(11, 10, 13, .78);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-          backdrop-filter: blur(14px) saturate(140%);
+  background: var(--night);              /* solid, no backdrop blur (see header) */
   box-shadow: 0 -1px 0 var(--line);
   transform: translateY(110%);
   visibility: hidden;
@@ -962,27 +993,27 @@ a { color: inherit; }
   .card--finale .btn { flex: 0 0 auto; }
 
   /* Gradients: from the text's side, fading out towards the right */
-  .at-desk-top .scrim,
-  .at-desk-bottom .scrim {
+  .at-desk-top::before,
+  .at-desk-bottom::before {
     -webkit-mask-image: linear-gradient(to right, #000 36%, transparent 80%);
             mask-image: linear-gradient(to right, #000 36%, transparent 80%);
   }
-  .at-desk-top .scrim {
+  .at-desk-top::before {
     background: linear-gradient(to bottom,
       rgba(var(--shade), .85) 0%, rgba(var(--shade), .75) 45%, rgba(var(--shade), .35) 66%, rgba(var(--shade), 0) 85%);
   }
-  .at-desk-bottom .scrim {
+  .at-desk-bottom::before {
     background: linear-gradient(to top,
       rgba(var(--shade), .85) 0%, rgba(var(--shade), .75) 45%, rgba(var(--shade), .35) 66%, rgba(var(--shade), 0) 85%);
   }
   /* Very bright frame (white flex under the text): a deeper, wider gradient */
-  .scene--bright.at-desk-top .scrim {
+  .scene--bright.at-desk-top::before {
     -webkit-mask-image: linear-gradient(to right, #000 45%, transparent 90%);
             mask-image: linear-gradient(to right, #000 45%, transparent 90%);
     background: linear-gradient(to bottom,
       rgba(var(--shade), .9) 0%, rgba(var(--shade), .86) 55%, rgba(var(--shade), .5) 75%, rgba(var(--shade), 0) 95%);
   }
-  .at-desk-middle .scrim {
+  .at-desk-middle::before {
     -webkit-mask-image: none;
             mask-image: none;
     background: linear-gradient(to right,
@@ -991,11 +1022,11 @@ a { color: inherit; }
 
   /* Top-RIGHT cards: the same gradient, mirrored, so it comes from the
      top-right corner and fades out towards the left */
-  .align-right.at-desk-top .scrim {
+  .align-right.at-desk-top::before {
     -webkit-mask-image: linear-gradient(to left, #000 36%, transparent 80%);
             mask-image: linear-gradient(to left, #000 36%, transparent 80%);
   }
-  .scene--bright.align-right.at-desk-top .scrim {
+  .scene--bright.align-right.at-desk-top::before {
     -webkit-mask-image: linear-gradient(to left, #000 45%, transparent 90%);
             mask-image: linear-gradient(to left, #000 45%, transparent 90%);
   }
@@ -1006,7 +1037,7 @@ a { color: inherit; }
   .align-center .display .line + .line { margin-left: .1em; }
 
   /* Bottom-CENTRE cards: a plain gradient up from the bottom, full width */
-  .align-center.at-desk-bottom .scrim {
+  .align-center.at-desk-bottom::before {
     -webkit-mask-image: none;
             mask-image: none;
     background: linear-gradient(to top,

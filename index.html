@@ -130,7 +130,9 @@
              data-chapter    this scene is a chapter: it gets a tick on the progress line
              .still          a still photo, only shown (and downloaded) when the film
                              is off: reduced motion or no JavaScript
-             .scrim          soft dark gradient on the text side, for readability -->
+             (each card scene draws a soft dark gradient on its text side with
+                             CSS ::before, for readability)
+             accent--*       colour of the serif phrase, taken from the light in the scene -->
         <div class="film__ui">
 
           <!-- Opening (frames 1–75) -->
@@ -139,7 +141,6 @@
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0040.webp" width="405" height="720">
               <img src="assets/frames/desktop/f0040.webp" width="1280" height="720" loading="lazy" alt="A blank white sheet floats above a large-format printer in the Trinetra workshop.">
             </picture>
-            <div class="scrim"></div>
             <div class="card">
               <p class="label fade">Trinetra Creations · Raipur</p>
               <h1 class="display">
@@ -157,12 +158,11 @@
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0185.webp" width="405" height="720">
               <img src="assets/frames/desktop/f0185.webp" width="1280" height="720" loading="lazy" alt="A large-format printer prints a violet and orange design onto white flex.">
             </picture>
-            <div class="scrim"></div>
             <div class="card">
               <p class="label label--chapter fade"><span><span class="num">01</span> · Print</span></p>
               <h2 class="display">
                 <span class="line"><span>Printed in-house,</span></span>
-                <span class="line"><span><em class="accent">colour-true.</em></span></span>
+                <span class="line"><span><em class="accent accent--violet">colour-true.</em></span></span>
               </h2>
               <p class="card__body fade">Large-format machines in our own facility, so your brand colours stay exact from the first sheet to the last.</p>
             </div>
@@ -174,12 +174,11 @@
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0330.webp" width="405" height="720">
               <img src="assets/frames/desktop/f0330.webp" width="1280" height="720" loading="lazy" alt="Gloved hands press metal eyelets into the edge of the printed flex.">
             </picture>
-            <div class="scrim"></div>
             <div class="card">
               <p class="label label--chapter fade"><span><span class="num">02</span> · Finish</span></p>
               <h2 class="display">
                 <span class="line"><span>Every edge,</span></span>
-                <span class="line"><span><em class="accent">reinforced.</em></span></span>
+                <span class="line"><span><em class="accent accent--saffron">reinforced.</em></span></span>
               </h2>
               <p class="card__body fade">Hemmed borders and metal eyelets along every side keep the flex tight through wind and monsoon rain.</p>
             </div>
@@ -191,12 +190,11 @@
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0480.webp" width="405" height="720">
               <img src="assets/frames/desktop/f0480.webp" width="1280" height="720" loading="lazy" alt="Three crew members carry the rolled hoarding out of the workshop.">
             </picture>
-            <div class="scrim"></div>
             <div class="card">
               <p class="label label--chapter fade"><span><span class="num">03</span> · Our crew</span></p>
               <h2 class="display">
                 <span class="line"><span>One team,</span></span>
-                <span class="line"><span><em class="accent">start to finish.</em></span></span>
+                <span class="line"><span><em class="accent accent--amber">start to finish.</em></span></span>
               </h2>
               <p class="card__body fade">The people who print your hoarding are the people who carry it out and put it up.</p>
             </div>
@@ -225,12 +223,11 @@
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f0800.webp" width="405" height="720">
               <img src="assets/frames/desktop/f0800.webp" width="1280" height="720" loading="lazy" alt="Installers in harnesses and helmets fix the banner high above the city at dusk.">
             </picture>
-            <div class="scrim"></div>
             <div class="card">
               <p class="label label--chapter fade"><span><span class="num">04</span> · Install</span></p>
               <h2 class="display">
                 <span class="line"><span>Installed safely,</span></span>
-                <span class="line"><span><em class="accent">at any height.</em></span></span>
+                <span class="line"><span><em class="accent accent--rose">at any height.</em></span></span>
               </h2>
               <p class="card__body fade">Harnessed, helmeted installers mount and tension every banner on site.</p>
             </div>
@@ -257,12 +254,11 @@
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f1040.webp" width="405" height="720">
               <img src="assets/frames/desktop/f1040.webp" width="1280" height="720" loading="lazy" alt="Floodlights shine on the Trinetra hoarding above a busy road at night.">
             </picture>
-            <div class="scrim"></div>
             <div class="card">
               <p class="label label--chapter fade"><span><span class="num">05</span> · Light</span></p>
               <h2 class="display">
                 <span class="line"><span>Seen</span></span>
-                <span class="line"><span><em class="accent">day and night.</em></span></span>
+                <span class="line"><span><em class="accent accent--gold">day and night.</em></span></span>
               </h2>
               <p class="card__body fade">Floodlit and backlit options keep your message working long after sunset.</p>
             </div>
@@ -274,13 +270,12 @@
               <source media="(max-aspect-ratio: 4/5)" srcset="assets/frames/portrait/f1160.webp" width="405" height="720">
               <img src="assets/frames/desktop/f1160.webp" width="1280" height="720" loading="lazy" alt="A giant lit hoarding showing the Trinetra logo stands over a busy road at night.">
             </picture>
-            <div class="scrim"></div>
             <div class="card card--finale">
               <p class="label fade">Imagine · Believe · Achieve</p>
               <h2 class="display">
                 <span class="line"><span>Your brand,</span></span>
-                <span class="line"><span><em class="accent">seen by the</em></span></span>
-                <span class="line"><span><em class="accent">whole city.</em></span></span>
+                <span class="line"><span><em class="accent accent--amber">seen by the</em></span></span>
+                <span class="line"><span><em class="accent accent--amber">whole city.</em></span></span>
               </h2>
               <div class="actions fade">
                 <a class="btn btn--primary" href="#contact"><span>Plan your hoarding</span></a>

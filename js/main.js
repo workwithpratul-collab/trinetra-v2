@@ -22,12 +22,35 @@
       syncTouchLerp: 0.07,
       touchInertiaMultiplier: 24,  // ...with a shorter "fling" than native (default 35)
       allowNestedScroll: true,     // sideways carousels still swipe natively
-      autoRaf: true
+      autoRaf: false               // we run Lenis from our own loop (section 2)
     });
     window.TrinetraLenis = lenis;
   }
 
-  /* ---------- 2. "Catch" fast swipes at text cards ----------
+  /* ---------- 2. ONE loop and ONE scroll listener for the whole page ----------
+     Every screen refresh: Lenis moves the scroll a little, then the film
+     draws. Lenis's "scroll" event is the single place the scroll position
+     comes from; it feeds the film, the header and the swipe catcher.
+     (Without Lenis, the browser's own scroll event does the same job.) */
+  function onScroll(y, e) {
+    if (film) film.setScroll(y);
+    updateHeader(y);
+    if (e) catchSwipe(y, e);
+  }
+  if (lenis) {
+    lenis.on('scroll', function (e) { onScroll(e.scroll, e); });
+  } else {
+    window.addEventListener('scroll', function () { onScroll(window.scrollY, null); }, { passive: true });
+  }
+  if (lenis || film) {
+    requestAnimationFrame(function loop(time) {
+      if (lenis) lenis.raf(time);     // 1. smooth scroll step (fires "scroll" if it moved)
+      if (film) film.tick(time);      // 2. film + text cards (does nothing when idle)
+      requestAnimationFrame(loop);
+    });
+  }
+
+  /* ---------- 3. "Catch" fast swipes at text cards ----------
      If a fast swipe or wheel spin enters a text moment, glide to the
      middle of it and pause briefly, so the words can be read. */
   var CATCH = [
@@ -39,28 +62,26 @@
   var programmatic = false;        // true while WE are scrolling (anchors, catches)
   var lastY = window.scrollY;
 
-  if (lenis && film) {
-    lenis.on('scroll', function (e) {
-      var y = e.scroll;
-      var prev = lastY;
-      lastY = y;
-      // Only real swipes and wheel spins ('smooth'). Never jumps such as the
-      // browser restoring your position, dragging the scrollbar, or keyboard.
-      if (programmatic || e.isScrolling !== 'smooth' || Math.abs(e.velocity) < FAST) return;
-      if (Math.abs(y - prev) > window.innerHeight) return;   // a jump, not a swipe
+  function catchSwipe(y, e) {
+    if (!film) return;
+    var prev = lastY;
+    lastY = y;
+    // Only real swipes and wheel spins ('smooth'). Never jumps such as the
+    // browser restoring your position, dragging the scrollbar, or keyboard.
+    if (programmatic || e.isScrolling !== 'smooth' || Math.abs(e.velocity) < FAST) return;
+    if (Math.abs(y - prev) > window.innerHeight) return;   // a jump, not a swipe
 
-      for (var i = 0; i < CATCH.length; i++) {
-        var c = CATCH[i];
-        var enterY = film.scrollForFrame(c.enter);
-        var holdY = film.scrollForFrame(c.hold);
-        var goingDown = prev < enterY && y >= enterY;   // crossed the start going down
-        var goingUp = prev > holdY && y <= holdY;       // crossed the middle going up
-        if (goingDown || goingUp) {
-          glideTo(holdY, 1.1, true);
-          break;
-        }
+    for (var i = 0; i < CATCH.length; i++) {
+      var c = CATCH[i];
+      var enterY = film.scrollForFrame(c.enter);
+      var holdY = film.scrollForFrame(c.hold);
+      var goingDown = prev < enterY && y >= enterY;   // crossed the start going down
+      var goingUp = prev > holdY && y <= holdY;       // crossed the middle going up
+      if (goingDown || goingUp) {
+        glideTo(holdY, 1.1, true);
+        break;
       }
-    });
+    }
   }
 
   // Smooth scroll to a position. lock = ignore input while gliding.
@@ -75,7 +96,7 @@
     });
   }
 
-  /* ---------- 3. Anchor links (#contact, #work, #top) ---------- */
+  /* ---------- 4. Anchor links (#contact, #work, #top) ---------- */
   document.addEventListener('click', function (e) {
     var a = e.target.closest('a[href^="#"]');
     if (!a) return;
@@ -98,26 +119,23 @@
     if (history.replaceState) history.replaceState(null, '', id);
   });
 
-  /* ---------- 4. Header: subtle during the film, solid after ---------- */
+  /* ---------- 5. Header: subtle during the film, solid after ----------
+     Called from onScroll (section 2). The class "is-past-film" also
+     slides the phone action bar into view. */
   var filmEl = document.querySelector('.film');
-  function filmBottom() {
-    return film ? film.filmEnd() : filmEl.offsetTop + filmEl.offsetHeight - window.innerHeight;
-  }
-  var past = null;
-  function updateHeader() {
-    var isPast = window.scrollY > filmBottom() - 2;
-    if (isPast !== past) {
-      past = isPast;
+  function updateHeader(y) {
+    var bottom = film ? film.filmEnd() : filmEl.offsetTop + filmEl.offsetHeight - window.innerHeight;
+    var isPast = y > bottom - 2;
+    if (isPast !== headerPast) {
+      headerPast = isPast;
       root.classList.toggle('is-past-film', isPast);
     }
   }
-  // (the class "is-past-film" also slides the phone action bar into view)
-  if (lenis) lenis.on('scroll', updateHeader);
-  else window.addEventListener('scroll', updateHeader, { passive: true });
-  window.addEventListener('resize', updateHeader);
-  updateHeader();
+  var headerPast = null;
+  window.addEventListener('resize', function () { updateHeader(window.scrollY); });
+  updateHeader(window.scrollY);
 
-  /* ---------- 5. Scroll reveals ----------
+  /* ---------- 6. Scroll reveals ----------
      Elements with class "reveal" fade and rise in when they enter the screen.
      The hiding CSS only applies after we add "reveal-on" here, so if this
      script never runs, nothing is ever hidden. */
@@ -135,7 +153,7 @@
     reveals.forEach(function (el) { io.observe(el); });
   }
 
-  /* ---------- 6. Work carousel counter ("1 / 6") on phones ---------- */
+  /* ---------- 7. Work carousel counter ("1 / 6") on phones ---------- */
   var track = document.querySelector('.work__track');
   var current = document.querySelector('.work__current');
   if (track && current) {
@@ -156,7 +174,7 @@
     }, { passive: true });
   }
 
-  /* ---------- 7. FAQ: one answer open at a time ----------
+  /* ---------- 8. FAQ: one answer open at a time ----------
      Modern browsers already do this because every <details> has name="faq".
      This covers older browsers: opening one closes the others. */
   var faqs = document.querySelectorAll('.faq__item');
@@ -169,7 +187,7 @@
     });
   });
 
-  /* ---------- 8. Footer year ---------- */
+  /* ---------- 9. Footer year ---------- */
   var year = document.querySelector('.year');
   if (year) year.textContent = new Date().getFullYear();
 })();

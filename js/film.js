@@ -3,6 +3,19 @@
    The scroll film: draws 1,189 frames on a <canvas> while you scroll,
    moves the timed text cards with the scroll, and runs the chapter
    indicator on the right edge.
+
+   How it stays smooth:
+   - Frames are downloaded as small compressed files, then DECODED ahead
+     of time into ready-to-draw pictures (ImageBitmap). Drawing a decoded
+     picture is instant; drawing an undecoded one makes the browser
+     decode it on the spot, which is what caused the stutter.
+   - Only the frames near the playhead (±40) are kept decoded; the rest
+     are freed so phones don't run out of memory.
+   - The playhead glides toward the scroll position instead of jumping,
+     so a fast scroll plays through the frames instead of skipping them.
+   - This file never listens to scroll itself. main.js owns the one
+     animation loop: it gives us the scroll position (setScroll) and
+     calls tick() once per screen refresh.
    ========================================================= */
 (function () {
   'use strict';
@@ -13,10 +26,17 @@
 
   /* ---------- Settings ---------- */
   var FRAME_COUNT = 1189;
+  var FRAME_SIZE = { desktop: [1280, 720], portrait: [405, 720] };   // pixels of one frame file
   var DESKTOP_ZOOM = 1.04;    // zoom desktop frames ~4% to crop the "Veo" watermark
   var WATERMARK_RIGHT = 40;   // watermark sits within 40px of the right edge (frame pixels)
-  var PARALLEL_LOADS = 6;     // how many frames download at the same time
-  var MAX_DPR = 2;            // sharper canvas on retina screens, capped to save memory
+  var MAX_LOADS = 6;          // at most 6 downloads at the same time
+  var MAX_DECODES = 4;        // at most 4 frames being decoded at the same time
+  var NEAR = 60;              // download every frame within ±60 of the playhead first
+  var KEEP = 40;              // keep frames within ±40 of the playhead decoded
+  var RELEASE = 46;           // free decoded frames further away than this (a little slack, so frames don't flicker in and out)
+  var EASE = 0.18;            // playhead moves 18% of the way to the scroll target per frame (at 60 fps)
+  var JUMP = 240;             // a jump bigger than this (e.g. the browser restoring your position) snaps instead of gliding
+  var MAX_SCALE = 1.5;        // canvas never has more than 1.5 pixels per frame pixel: more costs speed, adds no detail
 
   // Portrait frames are already cropped to follow the subject, but in the
   // last ~15 frames the hoarding logo drifts left. On tall phones (taller
@@ -27,6 +47,12 @@
   // Slow connection or Save-Data on? Then only load every 2nd frame.
   var conn = navigator.connection || {};
   var LITE = !!conn.saveData || /^(slow-2g|2g|3g)$/.test(conn.effectiveType || '');
+  var STEP = LITE ? 2 : 1;
+  function wanted(i) { return i % STEP === 0 || i === FRAME_COUNT - 1; }
+
+  // Can this browser decode into an ImageBitmap? (Older Safari can't: we
+  // then fall back to <img> + img.decode(), and keep those images.)
+  var CAN_BITMAP = typeof window.createImageBitmap === 'function' && typeof window.fetch === 'function';
 
   // Each frame normally gets the same amount of scroll. Some stretches get
   // MORE scroll ("weight") so text cards stay on screen longer.
@@ -61,29 +87,48 @@
     }
   })();
 
-  // progress (0..1) → frame index (0..1188)
-  function frameFromProgress(p) {
+  // Scroll progress (0..1) → playhead position (0..1189, with fractions).
+  // 136.4 means "40% of the way through frame index 136".
+  function posFromProgress(p) {
     var target = p * cumulative[FRAME_COUNT];
     var lo = 0, hi = FRAME_COUNT - 1;
     while (lo < hi) {                       // binary search
       var mid = (lo + hi + 1) >> 1;
       if (cumulative[mid] <= target) lo = mid; else hi = mid - 1;
     }
-    return lo;
+    var part = (target - cumulative[lo]) / (cumulative[lo + 1] - cumulative[lo]);
+    return lo + (part < 0 ? 0 : part > 1 ? 1 : part);
   }
-
-  // Same as above, but keeps the fraction and counts from 1 (e.g. 136.4).
-  // The text cards use this so they move smoothly *between* frames.
-  // i is the frame index frameFromProgress(p) already found.
-  function exactFrame(p, i) {
-    var target = p * cumulative[FRAME_COUNT];
-    var part = (target - cumulative[i]) / (cumulative[i + 1] - cumulative[i]);
-    return i + 1 + (part < 0 ? 0 : part > 1 ? 1 : part);
+  // The other way round: playhead position → share of the film (0..1),
+  // used for the progress line so it matches the ticks.
+  function progressFromPos(x) {
+    var i = Math.min(FRAME_COUNT - 1, Math.floor(x));
+    return (cumulative[i] + (x - i) * (cumulative[i + 1] - cumulative[i])) / cumulative[FRAME_COUNT];
   }
+  // Playhead position → the frame index to draw (a whole number)
+  function frameAt(x) { return Math.min(FRAME_COUNT - 1, Math.floor(x)); }
 
   /* ---------- Frame sets (desktop / portrait) ---------- */
   function makeSet(name) {
-    return { name: name, dir: 'assets/frames/' + name + '/', imgs: new Array(FRAME_COUNT), ready: new Uint8Array(FRAME_COUNT), queue: [], requested: new Uint8Array(FRAME_COUNT) };
+    // Far-away frames download in passes: every 8th frame, then every 4th,
+    // every 2nd, then the rest. (Frames near the playhead jump the queue.)
+    var far = [];
+    (LITE ? [8, 4, 2] : [8, 4, 2, 1]).forEach(function (step) {
+      for (var i = 0; i < FRAME_COUNT; i += step) far.push(i);
+    });
+    far.push(FRAME_COUNT - 1);
+    return {
+      name: name,
+      dir: 'assets/frames/' + name + '/',
+      size: FRAME_SIZE[name],
+      state: new Uint8Array(FRAME_COUNT),   // 0 = not asked for, 1 = downloading, 2 = downloaded, 3 = failed
+      files: new Array(FRAME_COUNT),        // downloaded file, still compressed (small)
+      pics: new Array(FRAME_COUNT),         // decoded picture, ready to draw
+      decoding: new Uint8Array(FRAME_COUNT),
+      live: [],                             // indexes that have a decoded picture right now
+      far: far,
+      farPos: 0
+    };
   }
   var sets = { desktop: makeSet('desktop'), portrait: makeSet('portrait') };
   var active = null;
@@ -97,63 +142,141 @@
     return set.dir + 'f' + String(i + 1).padStart(4, '0') + '.webp';
   }
 
-  // Download order: every 8th frame first, then every 4th, every 2nd, then all.
-  function buildQueue(set, startAt) {
-    var steps = LITE ? [8, 4, 2] : [8, 4, 2, 1];
-    var order = [startAt, 0, FRAME_COUNT - 1];
-    steps.forEach(function (step) {
-      for (var i = 0; i < FRAME_COUNT; i += step) order.push(i);
-    });
-    set.queue = order.filter(function (i) { return !set.requested[i]; });
+  /* ---------- Playhead ---------- */
+  var target = 0;      // where the scroll position says we should be
+  var current = 0;     // where the film actually is (glides toward target)
+  var needsDraw = true;
+
+  /* ---------- Downloading ---------- */
+  var loads = 0;
+
+  // Which frame to download next: the nearest missing frame around the
+  // playhead first (expanding outward), then the far-away passes.
+  function nextToLoad(set) {
+    var c = frameAt(target);
+    for (var d = 0; d <= NEAR; d++) {
+      var a = c + d, b = c - d;
+      if (a < FRAME_COUNT && wanted(a) && !set.state[a]) return a;
+      if (d && b >= 0 && wanted(b) && !set.state[b]) return b;
+    }
+    while (set.farPos < set.far.length) {
+      var i = set.far[set.farPos];
+      if (!set.state[i]) return i;
+      set.farPos++;
+    }
+    return -1;
   }
 
-  /* ---------- Loader ---------- */
-  var inFlight = 0;
-
   function pump() {
-    while (inFlight < PARALLEL_LOADS && active && active.queue.length) {
-      var i = active.queue.shift();
-      if (active.requested[i]) continue;
-      load(active, i);
+    while (active && loads < MAX_LOADS) {
+      var i = nextToLoad(active);
+      if (i < 0) return;
+      download(active, i);
     }
   }
 
-  function load(set, i) {
-    set.requested[i] = 1;
-    inFlight++;
-    var img = new Image();
-    img.decoding = 'async';
-    img.onload = function () {
-      set.imgs[i] = img;
-      set.ready[i] = 1;
-      inFlight--;
-      if (set === active) needsDraw = true;   // a closer frame may now exist
+  function download(set, i) {
+    set.state[i] = 1;
+    loads++;
+    function finish(ok) {
+      loads--;
+      if (!ok) set.state[i] = 3;
       pump();
-    };
-    img.onerror = function () {
-      inFlight--;
-      pump();
-    };
-    img.src = frameUrl(set, i);
+    }
+    if (CAN_BITMAP) {
+      fetch(frameUrl(set, i)).then(function (res) {
+        if (!res.ok) throw new Error(res.status);
+        return res.blob();
+      }).then(function (file) {
+        set.files[i] = file;
+        set.state[i] = 2;
+        finish(true);
+        if (set === active) feedDecoder();      // decode it if it's near the playhead
+      }).catch(function () { finish(false); });
+    } else {
+      // Fallback: an <img>, decoded with img.decode() before we use it
+      var img = new Image();
+      img.src = frameUrl(set, i);
+      img.decode().then(function () {
+        set.pics[i] = img;
+        set.state[i] = 2;
+        finish(true);
+        if (set === active) needsDraw = true;
+      }, function () { finish(false); });
+    }
   }
 
-  // Nearest loaded frame to i (looks backward and forward)
-  function nearestReady(set, i) {
-    if (set.ready[i]) return i;
+  /* ---------- Decoding (only near the playhead) ---------- */
+  var decodes = 0;
+
+  // Decode downloaded frames within ±KEEP of the scroll target, nearest first
+  function feedDecoder() {
+    if (!CAN_BITMAP || !active) return;
+    var c = frameAt(target);
+    for (var d = 0; d <= KEEP && decodes < MAX_DECODES; d++) {
+      decode(active, c + d);
+      if (d) decode(active, c - d);
+    }
+  }
+
+  function decode(set, i) {
+    if (i < 0 || i >= FRAME_COUNT || decodes >= MAX_DECODES) return;
+    if (set.state[i] !== 2 || set.pics[i] || set.decoding[i]) return;
+    set.decoding[i] = 1;
+    decodes++;
+    createImageBitmap(set.files[i]).then(function (pic) {
+      decodes--;
+      set.decoding[i] = 0;
+      if (set !== active || isFar(i)) {
+        pic.close();                            // no longer needed: free it straight away
+      } else {
+        set.pics[i] = pic;
+        set.live.push(i);
+        needsDraw = true;                       // a closer frame may now exist
+      }
+      feedDecoder();
+    }, function () {
+      decodes--;
+      set.decoding[i] = 0;
+      set.state[i] = 3;
+      feedDecoder();
+    });
+  }
+
+  // Far from both the frame on screen and the scroll target?
+  function isFar(i) {
+    return Math.abs(i - current) > RELEASE && Math.abs(i - target) > RELEASE;
+  }
+
+  // Free decoded frames that are far away (they can be decoded again
+  // from the downloaded file, without downloading it again)
+  function releaseFar(set) {
+    if (!CAN_BITMAP) return;
+    var keep = [];
+    for (var k = 0; k < set.live.length; k++) {
+      var i = set.live[k];
+      if (set === active && !isFar(i)) { keep.push(i); continue; }
+      set.pics[i].close();
+      set.pics[i] = null;
+    }
+    set.live = keep;
+  }
+
+  // Nearest decoded frame to i (looks backward and forward)
+  function nearestDecoded(set, i) {
+    if (set.pics[i]) return i;
     for (var d = 1; d < FRAME_COUNT; d++) {
-      if (i - d >= 0 && set.ready[i - d]) return i - d;
-      if (i + d < FRAME_COUNT && set.ready[i + d]) return i + d;
+      if (i - d >= 0 && set.pics[i - d]) return i - d;
+      if (i + d < FRAME_COUNT && set.pics[i + d]) return i + d;
     }
     return -1;
   }
 
   /* ---------- Drawing ---------- */
-  // Shown until the first frame arrives (same files the <head> preloads)
+  // Shown until the first frame is decoded (same files the <head> preloads)
   var posters = { desktop: new Image(), portrait: new Image() };
   posters.desktop.onload = posters.portrait.onload = function () { needsDraw = true; };
 
-  // Like CSS object-fit: cover. Desktop frames get the extra zoom and a
-  // crop that takes at least 40px off the right edge (hides the watermark).
   // Horizontal focus for a portrait frame (straight-line blend between keyframes)
   function portraitFocus(i) {
     var n = i + 1, k = PORTRAIT_FOCUS;
@@ -166,9 +289,11 @@
     return k[k.length - 1][1];
   }
 
-  function drawCover(img, isDesktopFrame, focusX) {
+  // Like CSS object-fit: cover. Desktop frames get the extra zoom and a
+  // crop that takes at least 40px off the right edge (hides the watermark).
+  function drawCover(pic, isDesktopFrame, focusX) {
     var cw = canvas.width, ch = canvas.height;
-    var iw = img.naturalWidth, ih = img.naturalHeight;
+    var iw = pic.naturalWidth || pic.width, ih = pic.naturalHeight || pic.height;
     if (!iw || !ih) return;
     var scale = Math.max(cw / iw, ch / ih) * (isDesktopFrame ? DESKTOP_ZOOM : 1);
     var sw = cw / scale, sh = ch / scale;     // part of the frame we show
@@ -179,22 +304,21 @@
       var cropRight = Math.max(cropX / 2, Math.min(WATERMARK_RIGHT, cropX));
       sx = cropX - cropRight;
     }
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
+    ctx.drawImage(pic, sx, sy, sw, sh, 0, 0, cw, ch);
   }
 
   var drawnKey = '';        // what is on the canvas right now
-  var needsDraw = true;
 
   function draw(frame) {
-    var n = nearestReady(active, frame);
+    var n = nearestDecoded(active, frame);
     var key = n >= 0 ? active.name + n : 'poster';
     if (!needsDraw && key === drawnKey) return;   // nothing changed: skip
     needsDraw = false;
+    var isDesktop = active.name === 'desktop';
     if (n >= 0) {
-      var isDesktop = active.name === 'desktop';
-      drawCover(active.imgs[n], isDesktop, isDesktop ? null : portraitFocus(n));
+      drawCover(active.pics[n], isDesktop, isDesktop ? null : portraitFocus(n));
     } else if (posters[active.name].naturalWidth) {
-      drawCover(posters[active.name], active.name === 'desktop');
+      drawCover(posters[active.name], isDesktop);
     } else {
       return;
     }
@@ -202,53 +326,77 @@
   }
 
   /* ---------- Layout ---------- */
-  var filmTop = 0, filmScroll = 1, lastW = 0, lastH = 0;
+  var filmTop = 0, filmScroll = 1, started = false;
+
+  // Canvas size = screen × devicePixelRatio, but never more than
+  // MAX_SCALE canvas pixels per frame pixel.
+  function sizeCanvas() {
+    var dpr = window.devicePixelRatio || 1;
+    var w = stage.clientWidth * dpr, h = stage.clientHeight * dpr;
+    var isDesktop = active.name === 'desktop';
+    var scale = Math.max(w / active.size[0], h / active.size[1]) * (isDesktop ? DESKTOP_ZOOM : 1);
+    if (scale > MAX_SCALE) { w *= MAX_SCALE / scale; h *= MAX_SCALE / scale; }
+    w = Math.max(1, Math.round(w));
+    h = Math.max(1, Math.round(h));
+    if (w !== canvas.width || h !== canvas.height) {
+      canvas.width = w;
+      canvas.height = h;
+      // (changing the size resets these, so set them again)
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      needsDraw = true;
+    }
+  }
 
   function measure() {
     var rect = film.getBoundingClientRect();
     filmTop = rect.top + window.scrollY;
     filmScroll = Math.max(1, film.offsetHeight - stage.offsetHeight);
 
-    // Resize the canvas only when the stage really changed size
-    var dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-    var w = Math.round(stage.clientWidth * dpr);
-    var h = Math.round(stage.clientHeight * dpr);
-    if (w !== lastW || h !== lastH) {
-      canvas.width = lastW = w;
-      canvas.height = lastH = h;
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      needsDraw = true;
-    }
-
     // Switch frame set if the screen shape changed (rotation, resize)
     var name = pickSetName();
     if (!active || active.name !== name) {
+      var old = active;
       active = sets[name];
+      if (old) releaseFar(old);                 // frees all of the old set's decoded frames
       var poster = posters[name];
       if (!poster.src) poster.src = name === 'desktop' ? 'assets/poster.webp' : 'assets/frames/portrait/f0001.webp';
-      buildQueue(active, currentFrame());
       needsDraw = true;
-      pump();
     }
+    sizeCanvas();
+    setScroll(window.scrollY);
+    if (!started) { current = target; started = true; }   // first time: start right where the page is
+    pump();
+    feedDecoder();
   }
 
-  function currentProgress() {
-    var p = (window.scrollY - filmTop) / filmScroll;
-    return p < 0 ? 0 : p > 1 ? 1 : p;
+  // Called by main.js with every scroll position (from Lenis's scroll event)
+  function setScroll(y) {
+    var p = (y - filmTop) / filmScroll;
+    var t = posFromProgress(p < 0 ? 0 : p > 1 ? 1 : p);
+    if (frameAt(t) !== frameAt(target)) {
+      target = t;
+      pump();                                   // new nearby frames to fetch
+      feedDecoder();                            // and to decode
+    } else {
+      target = t;
+    }
+    var hide = y > 24;
+    if (hide !== cueHidden) { cueHidden = hide; cue.classList.toggle('is-hidden', hide); }
   }
-  function currentFrame() { return frameFromProgress(currentProgress()); }
+  var cueHidden = false;
 
   /* ---------- Text cards (move with the scroll) ----------
      Every element with class "timed" has data-in and data-out (frame numbers).
-     Its look is worked out from the exact frame, so the text moves with your
-     scroll and plays backward when you scroll back:
+     Its look is worked out from the exact playhead position, so the text
+     moves with the film and plays backward when you scroll back:
        - its lines rise out of their masks over RISE frames, STAGGER frames apart
        - labels, body text and buttons (.fade) follow FADE_DELAY frames later
+       - the card drifts DRIFT px in from its own side (left cards from the
+         left, right cards from the right; centred cards only rise)
        - the whole card fades out over the last FADE_OUT frames before data-out
-     A card whose data-out is the last frame (the finale) never fades out. */
-  //   - the card drifts DRIFT px in from its own side (left cards from the
-  //     left, right cards from the right; centred cards only rise)
+     A card whose data-out is the last frame (the finale) never fades out.
+     Only transform and opacity change (the cheapest things to animate). */
   var RISE = 15, STAGGER = 3, FADE_DELAY = 6, FADE_IN = 8, FADE_OUT = 12, DRIFT = 12;
   // How far a hidden line sits below its mask (CSS uses the same number).
   // A bit more than 100%, because the masks leave room under each line for
@@ -273,7 +421,10 @@
     el._card = el.querySelector('.card');
     el._drift = el.classList.contains('align-right') ? DRIFT
               : el.classList.contains('align-center') ? 0 : -DRIFT;
+    // Frames after data-in until everything has landed
+    el._settle = Math.max((el._lines.length - 1) * STAGGER + RISE, FADE_DELAY + RISE);
     el._on = false;
+    el._moving = false;
   });
 
   function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
@@ -296,6 +447,13 @@
       if (on !== el._on) {
         el._on = on;
         el.classList.toggle('is-on', on);     // CSS: visible + clickable
+      }
+      // "is-moving" turns on will-change (CSS) only while the card animates,
+      // so the browser keeps it on its own layer just for that time.
+      var moving = on && (t < el._settle || fadeOut < 1);
+      if (moving !== el._moving) {
+        el._moving = moving;
+        el.classList.toggle('is-moving', moving);
       }
       if (!on) continue;
 
@@ -333,77 +491,92 @@
   var shownChapter = null;
 
   function updateChapters(frameNumber) {      // frameNumber is 1-based
-    var current = null;
+    var now = null;
     for (var i = 0; i < chapters.length; i++) {
       var c = chapters[i];
       var past = frameNumber >= c.start;
       if (past !== c.past) { c.past = past; c.tick.classList.toggle('is-past', past); }
-      if (past) current = c;
+      if (past) now = c;
     }
     // A chapter's name stays until the next one starts; the last one ends with its card
-    if (current && current === chapters[chapters.length - 1] && frameNumber > current.end) current = null;
-    if (current !== shownChapter) {
+    if (now && now === chapters[chapters.length - 1] && frameNumber > now.end) now = null;
+    if (now !== shownChapter) {
       if (shownChapter) shownChapter.tick.classList.remove('is-current');
-      if (current) current.tick.classList.add('is-current');      // amber tick
-      shownChapter = current;
-      if (current) {
-        chapterName.textContent = current.name;
-        chapterName.style.top = current.tick.style.top;
+      if (now) now.tick.classList.add('is-current');      // amber tick
+      shownChapter = now;
+      if (now) {
+        chapterName.textContent = now.name;
+        chapterName.style.top = now.tick.style.top;
       }
-      chapterName.classList.toggle('is-on', !!current);
+      chapterName.classList.toggle('is-on', !!now);
     }
   }
 
-  /* ---------- Main loop ---------- */
-  var lastFrame = -1, lastP = -1, lastIntro = -1;
+  /* ---------- One step, once per screen refresh (called by main.js) ---------- */
+  var lastFrame = -1, lastIntro = -1, lastTime = 0, cardsAt = -1;
 
-  function tick() {
-    var p = currentProgress();
-    var frame = frameFromProgress(p);
-    var intro = introStart === null ? 0 : Math.min(INTRO_FRAMES, (performance.now() - introStart) / 1000 * INTRO_FPS);
+  function tick(now) {
+    var dt = lastTime ? Math.min(100, now - lastTime) : 16.7;
+    lastTime = now;
 
-    if (p !== lastP || intro !== lastIntro) {
-      updateCards(exactFrame(p, frame), intro);
+    // Glide the playhead toward the scroll target. The step is scaled by
+    // time, so it feels the same on 60 Hz and 120 Hz screens.
+    var diff = target - current;
+    if (diff !== 0) {
+      if (Math.abs(diff) > JUMP) current = target;
+      else current += diff * (1 - Math.pow(1 - EASE, dt / 16.7));
+      if (Math.abs(target - current) < 0.01) current = target;    // close enough: stop gliding
+    }
+
+    var intro = introStart === null ? 0 : Math.min(INTRO_FRAMES, (now - introStart) / 1000 * INTRO_FPS);
+
+    // Nothing moving and nothing new to draw? Then do no work at all.
+    if (current === cardsAt && intro === lastIntro && !needsDraw) return;
+
+    if (current !== cardsAt || intro !== lastIntro) {
+      updateCards(current + 1, intro);
+      progressFill.style.transform = 'scaleY(' + progressFromPos(current).toFixed(4) + ')';
+      cardsAt = current;
       lastIntro = intro;
     }
+    var frame = frameAt(current);
     if (frame !== lastFrame) {
       updateChapters(frame + 1);
+      releaseFar(active);
+      feedDecoder();
       lastFrame = frame;
     }
-    if (p !== lastP) {
-      progressFill.style.transform = 'scaleY(' + p.toFixed(4) + ')';
-      cue.classList.toggle('is-hidden', window.scrollY > 24);
-      lastP = p;
-    }
     draw(frame);
-    requestAnimationFrame(tick);
   }
 
   /* ---------- Start ---------- */
-  var resizeQueued = false;
+  // Re-measure after the window settles (resize / rotation), not on every pixel
+  var resizeTimer = 0;
   function onResize() {
-    if (resizeQueued) return;
-    resizeQueued = true;
-    requestAnimationFrame(function () { resizeQueued = false; measure(); });
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(measure, 150);
   }
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', onResize);
   window.addEventListener('load', measure);   // fonts/images can shift the layout
 
   measure();
-  // Let the opening card animate in on the first paint
-  requestAnimationFrame(function () { requestAnimationFrame(tick); });
 
-  // Small hook for main.js: re-measure, and find the scroll position of a frame
+  // Small hook for main.js
   window.TrinetraFilm = {
+    tick: tick,
+    setScroll: setScroll,
     measure: measure,
-    scrollForFrame: function (n) {                 // n is 1-based
+    // Scroll position of a frame (n is 1-based)
+    scrollForFrame: function (n) {
       var i = Math.max(0, Math.min(FRAME_COUNT - 1, n - 1));
       var mid = (cumulative[i] + cumulative[i + 1]) / 2;   // middle of that frame's scroll slice
       return filmTop + (mid / cumulative[FRAME_COUNT]) * filmScroll;
     },
     filmEnd: function () { return filmTop + filmScroll; },
     // For testing in the browser console: which frame is wanted vs. drawn
-    state: function () { return { want: lastFrame + 1, drawn: drawnKey, set: active.name }; }
+    state: function () {
+      return { want: frameAt(target) + 1, at: frameAt(current) + 1, drawn: drawnKey, set: active.name, decoded: active.live.length };
+    }
   };
 })();

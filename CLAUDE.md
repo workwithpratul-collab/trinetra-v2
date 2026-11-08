@@ -81,7 +81,7 @@ The client has not given real details yet, so the site uses realistic **sample c
 ## Typography (direction "D · Highway" + a serif accent, about 75% / 25%)
 - **Headlines:** Big Shoulders Display (Google Fonts), weight 800, UPPERCASE, letter-spacing 0.005em, line-height 0.88, `text-wrap: balance`.
 - **Contrast face: Instrument Serif** (regular and italic), used ONLY for:
-  - the **highlighted phrase** in every headline (one per screen): Instrument Serif *italic*, lowercase, 1.1× the headline size, same baseline, same colour as the headline (`--ink`), letter-spacing -0.012em. The contrast comes from the typeface, not colour. Example: EVERY HOARDING STARTS AS A *blank sheet.*
+  - the **highlighted phrase** in every headline (one per screen): Instrument Serif *italic*, lowercase, 1.1× the headline size, same baseline, letter-spacing -0.012em. Example: EVERY HOARDING STARTS AS A *blank sheet.* Colour: only the serif phrase is coloured (see "Accent phrase colours"); the Big Shoulders words stay `--ink`.
   - "*From our floor…*" in the film (the answer "…TO YOUR SKYLINE." stays Big Shoulders, amber);
   - **section intros** (the 1–2 sentence lead under a section headline): Instrument Serif regular, 20px phones, 22–26px desktop, line-height 1.3, `--ink`;
   - the footer tagline "*Imagine · Believe · Achieve*" (italic).
@@ -103,7 +103,10 @@ Calm warm neutrals with ONE accent. Dark site only.
 --line:    rgba(244, 239, 232, 0.14)
 ```
 **Amber** (floodlights, sodium street lights) is used sparingly, only for: chapter numbers and hairlines, the active chapter tick and name, spec lines (sizes and materials), "…TO YOUR SKYLINE.", the FAQ open/close icon, and the primary button fill.
-**Brand colours** (violet #9b4dff, magenta #e8399a, saffron #ff8a3d, gradient violet → magenta → saffron) are reserved for exactly four places: the logo itself; "Imagine. Believe. Achieve." in the black moment (one colour per word); the progress line fill; the primary button's hover sweep.
+**Brand colours** (`--brand-violet` #9b4dff, `--brand-magenta` #e8399a, `--brand-saffron` #ff8a3d, gradient violet → magenta → saffron) are reserved for exactly four places: the logo itself; "Imagine. Believe. Achieve." in the black moment (one colour per word); the progress line fill; the primary button's hover sweep.
+
+**Accent phrase colours** (scene-light tokens, ONLY for the serif phrase in headlines): `--violet-soft` #b892ff (factory LED), `--saffron` #ff9a4d (printed arc), `--amber`, `--rose` #ff7aa8 (twilight, magenta banner), `--gold` #ffd27a (lit hoarding at night).
+Film: blank sheet → ink · 01 Print → violet-soft · 02 Finish → saffron · 03 Crew → amber · From our floor… → ink · 04 Install → rose · 05 Light → gold · finale → amber. Sections after the film: amber, except Contact ("up there.") → gold. All measured ≥ 5.9:1 over the real frames + gradients.
 Every text colour must pass WCAG AA on its background.
 
 ## Interactions
