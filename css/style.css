@@ -423,8 +423,224 @@ a { color: inherit; }
 }
 .cue.is-hidden { opacity: 0; }
 
-/* Temporary end-of-page block (Phase 3 replaces this) */
-.after { min-height: 60vh; background: var(--night); }
+/* =========================================================
+   6c. SECTIONS AFTER THE FILM
+   ========================================================= */
+.wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+.section {
+  position: relative;
+  padding: 104px 0;
+  background: var(--night);
+}
+.section + .section { border-top: 1px solid var(--line); }
+
+.section__head { max-width: 760px; }
+.section__head .label { margin-bottom: 18px; }
+.section__title { margin-bottom: 22px; }
+.section__lead {
+  max-width: 34ch;
+  color: var(--mute);
+  font-size: 18px;
+  line-height: 1.5;
+}
+.label--mute { color: var(--mute); opacity: 1; }
+
+/* ----- What we do ----- */
+.services__list {
+  list-style: none;
+  margin: 56px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+.service {
+  padding: 28px 0 32px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+}
+.service__num { margin-bottom: 4px; }
+.service__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1;
+}
+.service__text { max-width: 34ch; color: var(--mute); }
+.service__spec { margin-top: 6px; color: var(--ink); opacity: .9; }
+
+/* ----- Work ----- */
+.work__head {
+  max-width: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+.work__head .section__title { margin-bottom: 0; }
+.work__count {
+  flex: none;
+  padding-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Phones: a sideways swipe carousel that snaps to each photo */
+.work__track {
+  list-style: none;
+  margin: 40px 0 0;
+  padding: 0 var(--gutter);
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--gutter);
+  scrollbar-width: none;
+}
+.work__track::-webkit-scrollbar { display: none; }
+.work__item {
+  flex: 0 0 84%;
+  scroll-snap-align: start;
+}
+.work__media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.work__media > * {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1.6s var(--ease-out);
+}
+.work__brand {
+  margin-top: 16px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.1;
+}
+.work__meta { margin-top: 6px; }
+
+/* "Photo coming soon" placeholder: a dark panel with a hoarding-shaped frame */
+.ph {
+  position: relative;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(120% 90% at 85% 0%, rgba(155, 77, 255, .16), transparent 55%),
+    radial-gradient(90% 80% at 0% 100%, rgba(255, 138, 61, .1), transparent 60%),
+    var(--panel);
+}
+.ph__frame {
+  position: absolute;
+  left: 50%; top: 44%;
+  width: 62%;
+  aspect-ratio: 2 / 1;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(243, 238, 246, .16);
+  border-radius: 4px;
+}
+.ph__frame::after {                 /* the two legs of the hoarding */
+  content: "";
+  position: absolute;
+  left: 22%; right: 22%;
+  top: 100%;
+  height: 30%;
+  border-left: 1px solid rgba(243, 238, 246, .16);
+  border-right: 1px solid rgba(243, 238, 246, .16);
+}
+.ph__text {
+  position: absolute;
+  left: 0; right: 0; bottom: 14px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* ----- Contact ----- */
+.contact__side { margin-top: 48px; }
+.contact__list { margin: 0 0 32px; }
+.contact__row {
+  display: grid;
+  gap: 6px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+.contact__row:last-child { border-bottom: 1px solid var(--line); }
+.contact__row dd { margin: 0; }
+.contact__value {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+.btn--wide { width: 100%; }
+
+/* ----- Footer ----- */
+.footer {
+  padding: 56px 0 calc(var(--safe-b) + 112px);   /* room for the sticky bar on phones */
+  border-top: 1px solid var(--line);
+  color: var(--mute);
+  font-size: 15px;
+}
+.footer__grid { display: grid; gap: 28px; }
+.footer__brand { display: flex; align-items: center; gap: 14px; }
+.footer__brand img { width: 49px; height: auto; }
+.footer__name { font-family: var(--serif); font-size: 26px; line-height: 1.1; color: var(--ink); }
+.footer__tag { margin-top: 4px; }
+.footer__info { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+
+/* ----- Sticky action bar (phones only, after the film) ----- */
+.actionbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 10px;
+  padding: 10px var(--gutter) calc(var(--safe-b) + 10px);
+  background: rgba(10, 8, 16, .78);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+          backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 -1px 0 var(--line);
+  transform: translateY(110%);
+  visibility: hidden;
+  transition: transform .6s var(--ease-out), visibility 0s linear .6s;
+}
+.is-past-film .actionbar {
+  transform: none;
+  visibility: visible;
+  transition: transform .6s var(--ease-out), visibility 0s;
+}
+.actionbar__btn { min-height: 50px; padding: 0 16px; }
+.btn--grad { background: var(--grad); color: #fff; }
+
+/* ----- Scroll reveals -----
+   Only hidden when main.js says reveals are running (class "reveal-on"),
+   so if JavaScript fails, everything is simply visible. */
+.reveal-on .reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .9s ease, transform 1.1s var(--ease-out);
+}
+.reveal-on .reveal .line > span {
+  transform: translateY(105%);
+  transition: transform 1s var(--ease-out) calc(var(--i, 0) * .09s + .1s);
+}
+.reveal-on .reveal.is-in { opacity: 1; transform: none; }
+.reveal-on .reveal.is-in .line > span { transform: none; }
 
 /* =========================================================
    7. BIGGER SCREENS
@@ -480,6 +696,59 @@ a { color: inherit; }
   :root { --gutter: 32px; --header-h: 72px; }
   .header__brand img { height: 32px; }
   .header__brand span { font-size: 26px; }
+
+  .section { padding: clamp(112px, 11vw, 192px) 0; }
+  .section__title { font-size: clamp(56px, 7vw, 120px); }
+  .section__lead { font-size: 19px; }
+
+  /* What we do: three columns */
+  .services__list {
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(24px, 3vw, 48px);
+    margin-top: clamp(56px, 6vw, 96px);
+  }
+  .service:nth-child(2) { transition-delay: .12s; }
+  .service:nth-child(3) { transition-delay: .24s; }
+  .service__title { font-size: clamp(40px, 3.6vw, 56px); }
+
+  /* Work: a grid instead of a carousel */
+  .work__count { display: none; }
+  .work__track {
+    max-width: 1440px;
+    margin: clamp(48px, 5vw, 80px) auto 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 48px 24px;
+    overflow: visible;
+  }
+  .work__item:nth-child(even) { transition-delay: .12s; }
+
+  /* Contact: headline left, details right */
+  .contact__grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 64px;
+    align-items: end;
+  }
+  .contact__side { margin-top: 0; }
+  .btn--wide { width: auto; }
+
+  /* Footer: one row; no sticky bar on bigger screens */
+  .footer { padding-bottom: 56px; }
+  .footer__grid { grid-template-columns: 1.2fr 1fr auto; align-items: end; }
+  .actionbar { display: none; }
+}
+
+@media (min-width: 1100px) {
+  .work__track { grid-template-columns: repeat(3, 1fr); }
+  .work__item:nth-child(n) { transition-delay: 0s; }
+  .work__item:nth-child(3n + 2) { transition-delay: .12s; }
+  .work__item:nth-child(3n) { transition-delay: .24s; }
+}
+
+/* Slow zoom on hover: mouse and trackpad only (touch has no hover) */
+@media (hover: hover) and (min-width: 768px) {
+  .work__item:hover .work__media > * { transform: scale(1.05); }
 }
 
 /* Motion off: no animations, no transitions */

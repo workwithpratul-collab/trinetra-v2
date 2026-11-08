@@ -111,8 +111,52 @@
       root.classList.toggle('is-past-film', isPast);
     }
   }
+  // (the class "is-past-film" also slides the phone action bar into view)
   if (lenis) lenis.on('scroll', updateHeader);
   else window.addEventListener('scroll', updateHeader, { passive: true });
   window.addEventListener('resize', updateHeader);
   updateHeader();
+
+  /* ---------- 5. Scroll reveals ----------
+     Elements with class "reveal" fade and rise in when they enter the screen.
+     The hiding CSS only applies after we add "reveal-on" here, so if this
+     script never runs, nothing is ever hidden. */
+  var reveals = document.querySelectorAll('.reveal');
+  if (filmOn && 'IntersectionObserver' in window) {
+    root.classList.add('reveal-on');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-in');
+          io.unobserve(entry.target);          // reveal once, then forget it
+        }
+      });
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.01 });
+    reveals.forEach(function (el) { io.observe(el); });
+  }
+
+  /* ---------- 6. Work carousel counter ("1 / 6") on phones ---------- */
+  var track = document.querySelector('.work__track');
+  var current = document.querySelector('.work__current');
+  if (track && current) {
+    var items = track.children;
+    document.querySelector('.work__total').textContent = items.length;
+    var ticking = false;
+    track.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        ticking = false;
+        var step = items[1] ? items[1].offsetLeft - items[0].offsetLeft : 1;
+        var index = Math.round(track.scrollLeft / step);
+        // At the very end, the last card can't reach the left edge: count it anyway
+        if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 4) index = items.length - 1;
+        current.textContent = Math.min(items.length, index + 1);
+      });
+    }, { passive: true });
+  }
+
+  /* ---------- 7. Footer year ---------- */
+  var year = document.querySelector('.year');
+  if (year) year.textContent = new Date().getFullYear();
 })();
